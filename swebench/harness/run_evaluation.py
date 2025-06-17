@@ -75,6 +75,7 @@ def run_instance(
     run_id: str,
     timeout: int | None = None,
     rewrite_reports: bool = False,
+    test_methods: list = [],
 ):
     """
     Run a single instance with the given prediction.
@@ -143,7 +144,21 @@ def run_instance(
         )
         container.start()
         logger.info(f"Container for {instance_id} started: {container.id}")
+        
+        #TODO: started
+        git_commit = (
+            container.exec_run("git rev-parse HEAD", workdir=DOCKER_WORKDIR)
+            .output.decode("utf-8")
+            .strip()
+        )
+        logger.info(f"Current Git Commit: {git_commit}")
 
+        for test_method in test_methods:
+            logger.info(f"Get coverage for {test_method}...")
+
+
+        
+        """
         # Copy model prediction as patch file to container
         patch_file = Path(log_dir / "patch.diff")
         patch_file.write_text(pred[KEY_PREDICTION] or "")
@@ -239,6 +254,9 @@ def run_instance(
         with open(report_path, "w") as f:
             f.write(json.dumps(report, indent=4))
         return instance_id, report
+
+        """
+        logger.info(f"This is within docker run_instance for {instance_id}.")
     except EvaluationError as e:
         error_msg = traceback.format_exc()
         logger.info(error_msg)
@@ -275,6 +293,7 @@ def run_instances(
     namespace: str = "swebench",
     instance_image_tag: str = "latest",
     rewrite_reports: bool = False,
+    test_methods: list = [],
 ):
     """
     Run all instances for the given predictions in parallel.
@@ -330,6 +349,7 @@ def run_instances(
                 run_id,
                 timeout,
                 rewrite_reports,
+                test_methods
             )
         )
 
@@ -453,6 +473,7 @@ def main(
     timeout: int,
     namespace: str | None,
     rewrite_reports: bool,
+    test_methods: list[str],
     modal: bool,
     instance_image_tag: str = "latest",
     report_dir: str = ".",
@@ -520,6 +541,7 @@ def main(
             namespace=namespace,
             instance_image_tag=instance_image_tag,
             rewrite_reports=rewrite_reports,
+            test_methods=test_methods,
         )
 
     # clean images + make final report
@@ -610,6 +632,10 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--report_dir", type=str, default=".", help="Directory to write reports to"
+    )
+
+    parser.add_argument(
+        "--test_methods", type=json.loads, default=False, help="Test methods to get coverage for."
     )
 
     # Modal execution args
