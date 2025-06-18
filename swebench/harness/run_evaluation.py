@@ -215,22 +215,39 @@ def run_instance(
             f.write("\n# === Appended Commands ===\n")
             f.write("echo 'Current Git Commit:'\n")
             f.write("git rev-parse HEAD\n\n")
+
             f.write("# Install required Python packages\n")
             f.write("python -m pip install pytest pytest-cov coverage hypothesis pyerfa 'numpy<=1.23.2'\n\n")
 
             f.write("# Run coverage for each test method\n")
             for test_method in test_methods:
+                file_part, method_part = test_method.split("::")
+                method = method_part.strip()
                 safe_name = test_method.replace("::", "__").replace("/", "_").replace("\\", "_")
-                coverage_file = "/tmp/cov/.coverage"
                 json_output_path = f"coverage_outputs/{safe_name}.json"
 
-                f.write(f"echo 'Running coverage for {test_method}'\n")
-                f.write("mkdir -p /tmp/cov\n")
-                f.write(
-                    f'COVERAGE_FILE={coverage_file} coverage run -m pytest --disable-warnings {test_method} && '
-                    f'COVERAGE_FILE={coverage_file} coverage json -o {json_output_path}\n'
-                )
-                # f.write("rm -rf /tmp/cov\n\n")
+                f.write(f"\necho 'Resolving and running coverage for {test_method}'\n")
+                f.write(f"file_path=\"{file_part}\"\n")
+                f.write(f"method_name=\"{method}\"\n")
+                f.write(f"collected=$(pytest \"$file_path\" --collect-only -q)\n")
+                f.write("target_test=\"\"\n")
+                f.write("while read -r line; do\n")
+                f.write("    if [[ \"$line\" == *\"::$method_name\" ]]; then\n")
+                f.write("        target_test=\"$line\"\n")
+                f.write("        break\n")
+                f.write("    fi\n")
+                f.write("done <<< \"$collected\"\n\n")
+
+                f.write("if [[ -z \"$target_test\" ]]; then\n")
+                f.write("    echo \"ERROR: Could not find test $method_name in $file_path\"\n")
+                f.write("    exit 1\n")
+                f.write("fi\n\n")
+
+                f.write("mkdir -p /tmp/cov coverage_outputs\n")
+                f.write("COVERAGE_FILE=/tmp/cov/.coverage ")
+                f.write("coverage run -m pytest --disable-warnings \"$target_test\" && ")
+                f.write(f"COVERAGE_FILE=/tmp/cov/.coverage coverage json -o {json_output_path}\n")
+
 
         logger.info(
             f"Eval script for {instance_id} written to {eval_file}; copying to container..."
@@ -346,9 +363,11 @@ def run_instance(
             host_json_path = os.path.join(host_path, f"{instance_id}_{safe_name}.json")
 
             # copy_file_from_container(container, coverage_dir, host_path)
-            copy_file_from_container(container, json_output_path, host_json_path)
-            logger.info(f"Coverage for {test_method} copied to {host_json_path}")
-
+            try:
+                copy_file_from_container(container, json_output_path, host_json_path)
+                logger.info(f"Coverage for {test_method} copied to {host_json_path}")
+            except Exception as e:
+                logger.warning(f"Failed to copy coverage file: {e}")
         #     cleanup_cmd = "rm -rf /tmp/cov"
         #     logger.info("Cleaning up temporary directory in container: /tmp/cov")
         #     container.exec_run(cleanup_cmd, workdir=DOCKER_WORKDIR)
