@@ -5,6 +5,10 @@ import json
 import platform
 import traceback
 
+import os
+import io
+import tarfile
+
 if platform.system() == "Linux":
     import resource
 
@@ -64,6 +68,21 @@ GIT_APPLY_CMDS = [
     "git apply --verbose --reject",
     "patch --batch --fuzz=5 -p1 -i",
 ]
+
+
+def copy_file_from_container(container, container_file_path, host_output_path):
+    container_dir = os.path.dirname(container_file_path)
+    file_name = os.path.basename(container_file_path)
+
+    tar_stream, _ = container.get_archive(container_file_path)
+    os.makedirs(os.path.dirname(host_output_path), exist_ok=True)
+
+    with tarfile.open(fileobj=io.BytesIO(b"".join(tar_stream)), mode="r|*") as tar:
+        for member in tar:
+            if member.name.endswith(file_name):
+                member.name = os.path.basename(host_output_path)  # sanitize name
+                tar.extract(member, path=os.path.dirname(host_output_path))
+                break
 
 
 def run_instance(
@@ -146,18 +165,6 @@ def run_instance(
         logger.info(f"Container for {instance_id} started: {container.id}")
         
         #TODO: started
-        git_commit = (
-            container.exec_run("git rev-parse HEAD", workdir=DOCKER_WORKDIR)
-            .output.decode("utf-8")
-            .strip()
-        )
-        logger.info(f"Current Git Commit: {git_commit}")
-
-        for test_method in test_methods:
-            logger.info(f"Get coverage for {test_method}...")
-
-
-        
         """
         # Copy model prediction as patch file to container
         patch_file = Path(log_dir / "patch.diff")
@@ -198,9 +205,33 @@ def run_instance(
             .strip()
         )
         logger.info(f"Git diff before:\n{git_diff_output_before}")
+        """
 
         eval_file = Path(log_dir / "eval.sh")
         eval_file.write_text(test_spec.eval_script)
+
+        # Now append extra commands to the end of eval.sh
+        with eval_file.open("a") as f:
+            f.write("\n# === Appended Commands ===\n")
+            f.write("echo 'Current Git Commit:'\n")
+            f.write("git rev-parse HEAD\n\n")
+            f.write("# Install required Python packages\n")
+            f.write("python -m pip install pytest pytest-cov coverage hypothesis pyerfa 'numpy<=1.23.2'\n\n")
+
+            f.write("# Run coverage for each test method\n")
+            for test_method in test_methods:
+                safe_name = test_method.replace("::", "__").replace("/", "_").replace("\\", "_")
+                coverage_file = "/tmp/cov/.coverage"
+                json_output_path = f"coverage_outputs/{safe_name}.json"
+
+                f.write(f"echo 'Running coverage for {test_method}'\n")
+                f.write("mkdir -p /tmp/cov\n")
+                f.write(
+                    f'COVERAGE_FILE={coverage_file} coverage run -m pytest --disable-warnings {test_method} && '
+                    f'COVERAGE_FILE={coverage_file} coverage json -o {json_output_path}\n'
+                )
+                # f.write("rm -rf /tmp/cov\n\n")
+
         logger.info(
             f"Eval script for {instance_id} written to {eval_file}; copying to container..."
         )
@@ -234,10 +265,11 @@ def run_instance(
 
         # Check if git diff changed after running eval script
         logger.info(f"Git diff after:\n{git_diff_output_after}")
-        if git_diff_output_after != git_diff_output_before:
-            logger.info("Git diff changed after running eval script")
+        # if git_diff_output_after != git_diff_output_before:
+        #     logger.info("Git diff changed after running eval script")
 
         # Get report from test output
+        """
         logger.info(f"Grading answer for {instance_id}...")
         report = get_eval_report(
             test_spec=test_spec,
@@ -249,13 +281,85 @@ def run_instance(
             f"report: {report}\n"
             f"Result for {instance_id}: resolved: {report[instance_id]['resolved']}"
         )
+        """
+
+        # git_info_cmd = "git rev-parse HEAD"
+        # logger.info(f"Running command: {git_info_cmd} in container")
+        # git_commit = (
+        #     container.exec_run(git_info_cmd, workdir=DOCKER_WORKDIR)
+        #     .output.decode("utf-8")
+        #     .strip()
+        # )
+        # logger.info(f"Current Git Commit: {git_commit}")
+
+        # # pip install pytest coverage libs
+        # pip_cmds = "python -m pip install pytest pytest-cov coverage hypothesis pyerfa numpy<=1.23.2"
+        # logger.info(f"Running command: {pip_cmds} in container")
+        # pip_output = (
+        #     container.exec_run(pip_cmds, workdir=DOCKER_WORKDIR, user=DOCKER_USER)
+        #     .output.decode("utf-8")
+        #     .strip()
+        # )
+        # logger.info(f"{pip_output}")
+
+        for test_method in test_methods:
+        #     # get coverage for test method
+        #     logger.info(f"Get coverage for {test_method}...")
+            safe_name = test_method.replace("::", "__").replace("/", "_").replace("\\", "_")
+            coverage_dir = "/tmp/cov"
+            coverage_file = os.path.join(coverage_dir, ".coverage")
+            json_output_path = os.path.join(DOCKER_WORKDIR, "coverage_outputs", f"{safe_name}.json")
+        #     container.exec_run(f"mkdir -p {coverage_dir}", workdir=DOCKER_WORKDIR)
+        #     # Run test and collect coverage
+        #     coverage_cmd = (
+        #         f"COVERAGE_FILE=/tmp/cov/.coverage "
+        #         f"coverage run -m pytest --disable-warnings {test_method} && "
+        #         f"COVERAGE_FILE=/tmp/cov/.coverage "
+        #         f"coverage json -o {json_output_path}"
+        #     )
+        #     logger.info(f"Running coverage command in container:\n{coverage_cmd}")
+
+        #     result = container.exec_run(
+        #         cmd=["/bin/bash", "-c", coverage_cmd],
+        #         workdir=DOCKER_WORKDIR,
+        #         user=DOCKER_USER,
+        #         demux=True
+        #     )
+
+        #     stdout, stderr = result.output
+        #     if result.exit_code != 0:
+        #         logger.warning(f"Test failed or coverage error for {test_method}")
+        #         if stderr:
+        #             logger.warning(stderr.decode("utf-8"))
+        #         if stdout:
+        #             logger.warning(stdout.decode("utf-8"))
+        #     else:
+        #         logger.info(f"Coverage for {test_method} written to {json_output_path}")
+        #         if stdout:
+        #             logger.info(stdout.decode("utf-8"))
+        #         if stderr:
+        #             logger.info(stderr.decode("utf-8"))
+            
+        #     # copy from container
+            host_path = f"/data/workspace/yang/agent/docker_covs/{instance_id}/"
+            os.makedirs(host_path, exist_ok=True)
+            host_json_path = os.path.join(host_path, f"{instance_id}_{safe_name}.json")
+
+            # copy_file_from_container(container, coverage_dir, host_path)
+            copy_file_from_container(container, json_output_path, host_json_path)
+            logger.info(f"Coverage for {test_method} copied to {host_json_path}")
+
+        #     cleanup_cmd = "rm -rf /tmp/cov"
+        #     logger.info("Cleaning up temporary directory in container: /tmp/cov")
+        #     container.exec_run(cleanup_cmd, workdir=DOCKER_WORKDIR)
 
         # Write report to report.json
-        with open(report_path, "w") as f:
-            f.write(json.dumps(report, indent=4))
+        # with open(report_path, "w") as f:
+        #     f.write(json.dumps(report, indent=4))
+        report = ""
         return instance_id, report
 
-        """
+
         logger.info(f"This is within docker run_instance for {instance_id}.")
     except EvaluationError as e:
         error_msg = traceback.format_exc()
