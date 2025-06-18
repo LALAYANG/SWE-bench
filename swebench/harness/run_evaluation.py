@@ -221,7 +221,11 @@ def run_instance(
 
             f.write("# Run coverage for each test method\n")
             for test_method in test_methods:
-                file_part, method_part = test_method.split("::")
+                parts = test_method.split("::")
+                if len(parts) < 2:
+                    print(f"Invalid test method format: {test_method}")
+                file_part = parts[0]
+                method_part = parts[-1]
                 method = method_part.strip()
                 safe_name = test_method.replace("::", "__").replace("/", "_").replace("\\", "_")
                 json_output_path = f"coverage_outputs/{safe_name}.json"
