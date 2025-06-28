@@ -223,8 +223,12 @@ def run_instance(
                 f.write("sed -i.bak '/^\s*rsyncdirs\s*=/ s/^/# /' tox.ini\n")
 
             f.write("# Pre-collect all tests to speed up lookup\n")
-            f.write("pytest --collect-only -q -p no:warnings > all_tests.txt\n\n")
+            # f.write("pytest --collect-only -q -p no:warnings > all_tests.txt\n\n")
             f.write("# Run coverage for each test method\n")
+
+            f.write("# === Generate per-test commands for parallel execution ===\n")
+            f.write("echo '' > commands.sh\n")
+
             for test_method in test_methods:
                 parts = test_method.split("::")
                 if len(parts) < 2:
@@ -235,26 +239,48 @@ def run_instance(
                 safe_name = test_method.replace("::", "__").replace("/", "_").replace("\\", "_")
                 json_output_path = f"coverage_outputs/{safe_name}.json"
 
-                f.write(f"\necho 'Resolving and running coverage for {test_method}'\n")
-                f.write(f"file_path=\"{file_part}\"\n")
-                f.write(f"method_name=\"{method}\"\n")
-                f.write("target_test=$(grep \"^$file_path::.*::$method_name$\" all_tests.txt)\n\n")
+                collected_file = f"{file_part.replace('/', '_')}.collected.txt"
 
-                f.write("if [[ -z \"$target_test\" ]]; then\n")
-                f.write("    echo \"WARNING: Could not find test $method_name in $file_path\"\n")
-                f.write(f"   target_test=\"{test_method}\"\n")
-                f.write("fi\n\n")
-                f.write("    mkdir -p /tmp/cov coverage_outputs\n")
-                f.write("    COVERAGE_FILE=/tmp/cov/.coverage ")
+                cmd = (
+                    f"echo \"target_test=\\\"\\\"; "
+                    f"echo 'Running coverage for {test_method}'; "
+                    f"file_path='{file_part}'; "
+                    f"method_name='{method}'; "
+                    f"collected_file='{collected_file}'; "
+                    # Check if collection cache exists
+                    f"if [ ! -f \\\"\\$collected_file\\\" ]; then "
+                    f"echo 'Collecting tests using pytest --collect-only'; "
+                    f"pytest \\\"\\$file_path\\\" --collect-only -q > \\\"\\$collected_file\\\"; "
+                    f"fi; "
+                    # Grep for the test
+                    f"target_test=\\$(grep '^\\$file_path::.*::\\${{method_name}}\\$' \\\"\\$collected_file\\\" || true); "
+                    # Use POSIX-compatible [ ] for the check
+                    f"if [ -z \\\"\\$target_test\\\" ]; then echo 'WARNING: Falling back'; target_test='{test_method}'; fi; "
+                    f"mkdir -p /tmp/cov coverage_outputs; "
+                    f"COVERAGE_FILE=/tmp/cov/.coverage "
+                )
+
+
                 if "pytest" in instance_id:
-                    f.write("coverage --source=pytest run -m pytest --disable-warnings \"$target_test\" -p no:xdist || echo 'Test execution failed'\n")
+                    cmd += (
+                        "coverage --source=pytest run -m pytest --disable-warnings \\\"\\$target_test\\\" -p no:xdist || echo 'Test failed' && "
+                    )
                 elif "sphinx" in instance_id:
-                    f.write("coverage --source=sphinx run -m pytest \"$target_test\" || echo 'Test execution failed'\n")
+                    cmd += (
+                        "coverage --source=sphinx run -m pytest \\\"\\$target_test\\\" || echo 'Test failed' && "
+                    )
                 else:
-                    f.write("coverage run -m pytest --disable-warnings \"$target_test\" || echo 'Test execution failed'\n")
-                f.write(f"    COVERAGE_FILE=/tmp/cov/.coverage coverage json -o {json_output_path} || echo 'Coverage JSON generation failed'\n")
-                
+                    cmd += (
+                        "coverage run -m pytest --disable-warnings \\\"\\$target_test\\\" || echo 'Test failed' && "
+                    )
+                cmd += (
+                    f"COVERAGE_FILE=/tmp/cov/.coverage coverage json -o {json_output_path} || echo 'Coverage JSON generation failed'\" >> commands.sh\n"
+                )
+                f.write(cmd)
 
+            f.write("\n# === Execute commands in parallel using xargs -P ===\n")
+            f.write("chmod +x commands.sh\n")
+            f.write("cat commands.sh | xargs -I CMD -P 4 bash -c \"CMD\"\n\n")
 
         logger.info(
             f"Eval script for {instance_id} written to {eval_file}; copying to container..."
