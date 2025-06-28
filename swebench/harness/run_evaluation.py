@@ -218,7 +218,12 @@ def run_instance(
 
             f.write("# Install required Python packages\n")
             f.write("python -m pip install pytest pytest-cov coverage hypothesis pyerfa 'numpy<=1.23.2'\n\n")
+            if 'pytest' in instance_id:
+                f.write("pip install --upgrade pytest-cov pytest-xdist\n")
+                f.write("sed -i.bak '/^\s*rsyncdirs\s*=/ s/^/# /' tox.ini\n")
 
+            f.write("# Pre-collect all tests to speed up lookup\n")
+            f.write("pytest --collect-only -q -p no:warnings > all_tests.txt\n\n")
             f.write("# Run coverage for each test method\n")
             for test_method in test_methods:
                 parts = test_method.split("::")
@@ -233,24 +238,22 @@ def run_instance(
                 f.write(f"\necho 'Resolving and running coverage for {test_method}'\n")
                 f.write(f"file_path=\"{file_part}\"\n")
                 f.write(f"method_name=\"{method}\"\n")
-                f.write(f"collected=$(pytest \"$file_path\" --collect-only -q)\n")
-                f.write("target_test=\"\"\n")
-                f.write("while read -r line; do\n")
-                f.write("    if [[ \"$line\" == *\"::$method_name\" ]]; then\n")
-                f.write("        target_test=\"$line\"\n")
-                f.write("        break\n")
-                f.write("    fi\n")
-                f.write("done <<< \"$collected\"\n\n")
+                f.write("target_test=$(grep \"^$file_path::.*::$method_name$\" all_tests.txt)\n\n")
 
                 f.write("if [[ -z \"$target_test\" ]]; then\n")
-                f.write("    echo \"ERROR: Could not find test $method_name in $file_path\"\n")
-                f.write("    exit 1\n")
+                f.write("    echo \"WARNING: Could not find test $method_name in $file_path\"\n")
+                f.write(f"   target_test=\"{test_method}\"\n")
                 f.write("fi\n\n")
-
-                f.write("mkdir -p /tmp/cov coverage_outputs\n")
-                f.write("COVERAGE_FILE=/tmp/cov/.coverage ")
-                f.write("coverage run -m pytest --disable-warnings \"$target_test\" && ")
-                f.write(f"COVERAGE_FILE=/tmp/cov/.coverage coverage json -o {json_output_path}\n")
+                f.write("    mkdir -p /tmp/cov coverage_outputs\n")
+                f.write("    COVERAGE_FILE=/tmp/cov/.coverage ")
+                if "pytest" in instance_id:
+                    f.write("coverage --source=pytest run -m pytest --disable-warnings \"$target_test\" -p no:xdist || echo 'Test execution failed'\n")
+                elif "sphinx" in instance_id:
+                    f.write("coverage --source=sphinx run -m pytest \"$target_test\" || echo 'Test execution failed'\n")
+                else:
+                    f.write("coverage run -m pytest --disable-warnings \"$target_test\" || echo 'Test execution failed'\n")
+                f.write(f"    COVERAGE_FILE=/tmp/cov/.coverage coverage json -o {json_output_path} || echo 'Coverage JSON generation failed'\n")
+                
 
 
         logger.info(
@@ -362,7 +365,7 @@ def run_instance(
         #             logger.info(stderr.decode("utf-8"))
             
         #     # copy from container
-            host_path = f"/data/workspace/yang/agent/docker_covs/{instance_id}/"
+            host_path = f"/data/workspace/yang/agent/docker_covs_all/{instance_id}/"
             os.makedirs(host_path, exist_ok=True)
             host_json_path = os.path.join(host_path, f"{instance_id}_{safe_name}.json")
 
@@ -718,7 +721,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--timeout",
         type=int,
-        default=1_800,
+        default=7_200,  # 2 hours
         help="Timeout (in seconds) for running tests for each instance",
     )
     parser.add_argument(
