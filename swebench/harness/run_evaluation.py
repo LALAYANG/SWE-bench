@@ -84,6 +84,23 @@ def copy_file_from_container(container, container_file_path, host_output_path):
                 tar.extract(member, path=os.path.dirname(host_output_path))
                 break
 
+import re
+def get_modified_file(instance_id):
+    patch_text = ""
+    from datasets import load_dataset
+    dataset = load_dataset('princeton-nlp/SWE-bench_Verified')
+    dataset = dataset['test']
+    for item in dataset:
+        if item['instance_id'] == instance_id:
+            patch_text =  item['patch']
+    modified_files = set()
+    pattern = re.compile(r'^diff --git a/(.+?) b/(.+)$', re.MULTILINE)
+
+    for match in pattern.finditer(patch_text):
+        modified_file = match.group(2).strip()
+        modified_files.add(modified_file)
+
+    return modified_files
 
 def run_instance(
     test_spec: TestSpec,
@@ -154,6 +171,9 @@ def run_instance(
     log_file = log_dir / LOG_INSTANCE
     logger = setup_logger(instance_id, log_file)
 
+    # get modified files of instance_id
+    modified_files = get_modified_file(instance_id)
+
     # Run the instance
     container = None
     try:
@@ -209,6 +229,7 @@ def run_instance(
 
         eval_file = Path(log_dir / "eval.sh")
         eval_file.write_text(test_spec.eval_script)
+        result_files = []
 
         # Now append extra commands to the end of eval.sh
         with eval_file.open("a") as f:
@@ -217,70 +238,115 @@ def run_instance(
             f.write("git rev-parse HEAD\n\n")
 
             f.write("# Install required Python packages\n")
-            f.write("python -m pip install pytest pytest-cov coverage hypothesis pyerfa 'numpy<=1.23.2'\n\n")
-            if 'pytest' in instance_id:
-                f.write("pip install --upgrade pytest-cov pytest-xdist\n")
-                f.write("sed -i.bak '/^\s*rsyncdirs\s*=/ s/^/# /' tox.ini\n")
+            if "astropy" in instance_id:
+                f.write("python -m pip install pytest pytest-cov coverage hypothesis pyerfa 'numpy<=1.23.2'\n\n")
+                f.write("python -m pip install -e .[test] coverage pytest\n")
+                if 'pytest' in instance_id:
+                    f.write("pip install --upgrade pytest-cov pytest-xdist\n")
+                    f.write("sed -i.bak '/^\s*rsyncdirs\s*=/ s/^/# /' tox.ini\n")
+            elif "django" in instance_id:
+                f.write("python -m pip install pytest pytest-cov coverage\n\n")
 
-            f.write("# Pre-collect all tests to speed up lookup\n")
-            # f.write("pytest --collect-only -q -p no:warnings > all_tests.txt\n\n")
-            f.write("# Run coverage for each test method\n")
+                f.write("# Pre-collect all tests to speed up lookup\n")
+                # f.write("pytest --collect-only -q -p no:warnings > all_tests.txt\n\n")
+                f.write("# Run coverage for each test method\n")
+                f.write("# Configure .coveragerc for per-test dynamic context tracking\n")
+                # f.write("echo \"[run]\" > .coveragerc\n")
+                # f.write("echo \"dynamic_context = test_function\" >> .coveragerc\n")
+                # f.write("echo \"\" >> .coveragerc\n")
+                # f.write("echo \"[report]\" >> .coveragerc\n")
+                # f.write("echo \"show_missing = True\" >> .coveragerc\n\n")
 
-            f.write("# === Generate per-test commands for parallel execution ===\n")
-            f.write("echo '' > commands.sh\n")
-
-            for test_method in test_methods:
-                parts = test_method.split("::")
-                if len(parts) < 2:
-                    print(f"Invalid test method format: {test_method}")
-                file_part = parts[0]
-                method_part = parts[-1]
-                method = method_part.strip()
-                safe_name = test_method.replace("::", "__").replace("/", "_").replace("\\", "_")
-                json_output_path = f"coverage_outputs/{safe_name}.json"
-
-                collected_file = f"{file_part.replace('/', '_')}.collected.txt"
-
-                cmd = (
-                    f"echo \"target_test=\\\"\\\"; "
-                    f"echo 'Running coverage for {test_method}'; "
-                    f"file_path='{file_part}'; "
-                    f"method_name='{method}'; "
-                    f"collected_file='{collected_file}'; "
-                    # Check if collection cache exists
-                    f"if [ ! -f \\\"\\$collected_file\\\" ]; then "
-                    f"echo 'Collecting tests using pytest --collect-only'; "
-                    f"pytest \\\"\\$file_path\\\" --collect-only -q > \\\"\\$collected_file\\\"; "
-                    f"fi; "
-                    # Grep for the test
-                    f"target_test=\\$(grep '^\\$file_path::.*::\\${{method_name}}\\$' \\\"\\$collected_file\\\" || true); "
-                    # Use POSIX-compatible [ ] for the check
-                    f"if [ -z \\\"\\$target_test\\\" ]; then echo 'WARNING: Falling back'; target_test='{test_method}'; fi; "
-                    f"mkdir -p /tmp/cov coverage_outputs; "
-                    f"COVERAGE_FILE=/tmp/cov/.coverage "
-                )
+                f.write("echo \"[run]\" > .coveragerc\n")
+                f.write("echo \"dynamic_context = test_function\" >> .coveragerc\n")
+                f.write("echo \"\" >> .coveragerc\n")
+                f.write("echo \"[report]\" >> .coveragerc\n")
+                f.write("echo \"show_missing = True\" >> .coveragerc\n")
+                f.write("echo \"omit =\" >> .coveragerc\n")
+                f.write("echo \"    /testbed/generated/*\" >> .coveragerc\n")
+                f.write("echo \"ignore_errors = True\" >> .coveragerc\n")
 
 
-                if "pytest" in instance_id:
-                    cmd += (
-                        "coverage --source=pytest run -m pytest --disable-warnings \\\"\\$target_test\\\" -p no:xdist || echo 'Test failed' && "
-                    )
-                elif "sphinx" in instance_id:
-                    cmd += (
-                        "coverage --source=sphinx run -m pytest \\\"\\$target_test\\\" || echo 'Test failed' && "
-                    )
-                else:
-                    cmd += (
-                        "coverage run -m pytest --disable-warnings \\\"\\$target_test\\\" || echo 'Test failed' && "
-                    )
-                cmd += (
-                    f"COVERAGE_FILE=/tmp/cov/.coverage coverage json -o {json_output_path} || echo 'Coverage JSON generation failed'\" >> commands.sh\n"
-                )
-                f.write(cmd)
+                #echo -e "[run]\ndynamic_context = test_function\n\n[report]\nshow_missing = True\nomit =\n    /testbed/generated/*\nignore_errors = True" > .coveragerc
 
-            f.write("\n# === Execute commands in parallel using xargs -P ===\n")
-            f.write("chmod +x commands.sh\n")
-            f.write("cat commands.sh | xargs -I CMD -P 4 bash -c \"CMD\"\n\n")
+                f.write("# Run tests with coverage using dynamic contexts\n")
+                f.write("start_time=$(date +%s)\n")
+                f.write("echo \"Start time: $(date -d @$start_time)\"\n")
+                f.write("coverage run ./tests/runtests.py --verbosity 2 --settings=test_sqlite --parallel 1\n")
+                f.write("end_time=$(date +%s)\n")
+                f.write("echo \"End time: $(date -d @$end_time)\"\n")
+
+                f.write("start_time=$(date +%s)\n")
+                f.write("echo \"Start time: $(date -d @$start_time)\"\n")
+                f.write("# Generate a human-readable coverage report\n")
+                
+                f.write("coverage report -m\n\n")
+
+                # f.write("# List all available test contexts for per-test coverage\n")
+                # f.write("coverage context -l\n\n")
+
+                f.write("# Export coverage data as JSON for programmatic analysis\n")
+                # f.write("coverage json --show-contexts  -o coverage.json\n\n")
+                for file in modified_files:
+                    name = file.replace(".py", "").replace("/", "_")
+                    result_path = f"{name}_{instance_id}_coverage.json"
+                    f.write(f"coverage json --show-contexts --include {file} -o {result_path}\n\n")
+                    result_files.append(result_path)
+                f.write("end_time=$(date +%s)\n")
+                f.write("echo \"End time: $(date -d @$end_time)\"\n")
+                
+            else:
+                f.write("python -m pip install pytest pytest-cov coverage\n\n")
+
+                f.write("# Pre-collect all tests to speed up lookup\n")
+                # f.write("pytest --collect-only -q -p no:warnings > all_tests.txt\n\n")
+                f.write("# Run coverage for each test method\n")
+                f.write("# Configure .coveragerc for per-test dynamic context tracking\n")
+                # f.write("echo \"[run]\" > .coveragerc\n")
+                # f.write("echo \"dynamic_context = test_function\" >> .coveragerc\n")
+                # f.write("echo \"\" >> .coveragerc\n")
+                # f.write("echo \"[report]\" >> .coveragerc\n")
+                # f.write("echo \"show_missing = True\" >> .coveragerc\n\n")
+
+                f.write("echo \"[run]\" > .coveragerc\n")
+                f.write("echo \"dynamic_context = test_function\" >> .coveragerc\n")
+                f.write("echo \"\" >> .coveragerc\n")
+                f.write("echo \"[report]\" >> .coveragerc\n")
+                f.write("echo \"show_missing = True\" >> .coveragerc\n")
+                f.write("echo \"omit =\" >> .coveragerc\n")
+                f.write("echo \"    /testbed/generated/*\" >> .coveragerc\n")
+                f.write("echo \"ignore_errors = True\" >> .coveragerc\n")
+
+
+                #echo -e "[run]\ndynamic_context = test_function\n\n[report]\nshow_missing = True\nomit =\n    /testbed/generated/*\nignore_errors = True" > .coveragerc
+
+                f.write("# Run tests with coverage using dynamic contexts\n")
+                f.write("start_time=$(date +%s)\n")
+                f.write("echo \"Start time: $(date -d @$start_time)\"\n")
+                f.write("coverage run ./tests/runtests.py --verbosity 2 --settings=test_sqlite --parallel 1\n")
+                f.write("end_time=$(date +%s)\n")
+                f.write("echo \"End time: $(date -d @$end_time)\"\n")
+
+                f.write("start_time=$(date +%s)\n")
+                f.write("echo \"Start time: $(date -d @$start_time)\"\n")
+                f.write("# Generate a human-readable coverage report\n")
+                
+                f.write("coverage report -m\n\n")
+
+                # f.write("# List all available test contexts for per-test coverage\n")
+                # f.write("coverage context -l\n\n")
+
+                f.write("# Export coverage data as JSON for programmatic analysis\n")
+                # f.write("coverage json --show-contexts  -o coverage.json\n\n")
+                for file in modified_files:
+                    name = file.replace(".py", "").replace("/", "_")
+                    result_path = f"{name}_{instance_id}_coverage.json"
+                    f.write(f"coverage json --show-contexts --include {file} -o {result_path}\n\n")
+                    result_files.append(result_path)
+                f.write("end_time=$(date +%s)\n")
+                f.write("echo \"End time: $(date -d @$end_time)\"\n")
+                f.write("chmod 777 /testbed\n")
+
 
         logger.info(
             f"Eval script for {instance_id} written to {eval_file}; copying to container..."
@@ -312,6 +378,7 @@ def run_instance(
             .output.decode(UTF8)
             .strip()
         )
+        # exit(0)
 
         # Check if git diff changed after running eval script
         logger.info(f"Git diff after:\n{git_diff_output_after}")
@@ -332,82 +399,24 @@ def run_instance(
             f"Result for {instance_id}: resolved: {report[instance_id]['resolved']}"
         )
         """
-
-        # git_info_cmd = "git rev-parse HEAD"
-        # logger.info(f"Running command: {git_info_cmd} in container")
-        # git_commit = (
-        #     container.exec_run(git_info_cmd, workdir=DOCKER_WORKDIR)
-        #     .output.decode("utf-8")
-        #     .strip()
-        # )
-        # logger.info(f"Current Git Commit: {git_commit}")
-
-        # # pip install pytest coverage libs
-        # pip_cmds = "python -m pip install pytest pytest-cov coverage hypothesis pyerfa numpy<=1.23.2"
-        # logger.info(f"Running command: {pip_cmds} in container")
-        # pip_output = (
-        #     container.exec_run(pip_cmds, workdir=DOCKER_WORKDIR, user=DOCKER_USER)
-        #     .output.decode("utf-8")
-        #     .strip()
-        # )
-        # logger.info(f"{pip_output}")
-
-        for test_method in test_methods:
-        #     # get coverage for test method
-        #     logger.info(f"Get coverage for {test_method}...")
-            safe_name = test_method.replace("::", "__").replace("/", "_").replace("\\", "_")
-            coverage_dir = "/tmp/cov"
+        
+        for rfile in result_files:
+            coverage_dir = "/testbed"
             coverage_file = os.path.join(coverage_dir, ".coverage")
-            json_output_path = os.path.join(DOCKER_WORKDIR, "coverage_outputs", f"{safe_name}.json")
-        #     container.exec_run(f"mkdir -p {coverage_dir}", workdir=DOCKER_WORKDIR)
-        #     # Run test and collect coverage
-        #     coverage_cmd = (
-        #         f"COVERAGE_FILE=/tmp/cov/.coverage "
-        #         f"coverage run -m pytest --disable-warnings {test_method} && "
-        #         f"COVERAGE_FILE=/tmp/cov/.coverage "
-        #         f"coverage json -o {json_output_path}"
-        #     )
-        #     logger.info(f"Running coverage command in container:\n{coverage_cmd}")
-
-        #     result = container.exec_run(
-        #         cmd=["/bin/bash", "-c", coverage_cmd],
-        #         workdir=DOCKER_WORKDIR,
-        #         user=DOCKER_USER,
-        #         demux=True
-        #     )
-
-        #     stdout, stderr = result.output
-        #     if result.exit_code != 0:
-        #         logger.warning(f"Test failed or coverage error for {test_method}")
-        #         if stderr:
-        #             logger.warning(stderr.decode("utf-8"))
-        #         if stdout:
-        #             logger.warning(stdout.decode("utf-8"))
-        #     else:
-        #         logger.info(f"Coverage for {test_method} written to {json_output_path}")
-        #         if stdout:
-        #             logger.info(stdout.decode("utf-8"))
-        #         if stderr:
-        #             logger.info(stderr.decode("utf-8"))
-            
-        #     # copy from container
-            host_path = f"/data/workspace/yang/agent/docker_covs_all/{instance_id}/"
+            json_output_path = os.path.join(DOCKER_WORKDIR, rfile)
+            host_path = f"/data/workspace/yang/agent/new_covs_django/{instance_id}/"
             os.makedirs(host_path, exist_ok=True)
-            host_json_path = os.path.join(host_path, f"{instance_id}_{safe_name}.json")
+            host_json_path = os.path.join(host_path, f"{instance_id}_{rfile}")
+            host_coverge_path = os.path.join(host_path, coverage_file)
 
-            # copy_file_from_container(container, coverage_dir, host_path)
             try:
                 copy_file_from_container(container, json_output_path, host_json_path)
-                logger.info(f"Coverage for {test_method} copied to {host_json_path}")
+                copy_file_from_container(container, coverage_file, host_coverge_path)
+                # copy_file_from_container(container, coverage_dir, host
+                logger.info(f"Coverage for {rfile} copied to {host_json_path}")
             except Exception as e:
                 logger.warning(f"Failed to copy coverage file: {e}")
-        #     cleanup_cmd = "rm -rf /tmp/cov"
-        #     logger.info("Cleaning up temporary directory in container: /tmp/cov")
-        #     container.exec_run(cleanup_cmd, workdir=DOCKER_WORKDIR)
-
-        # Write report to report.json
-        # with open(report_path, "w") as f:
-        #     f.write(json.dumps(report, indent=4))
+            break
         report = ""
         return instance_id, report
 
@@ -430,9 +439,9 @@ def run_instance(
         logger.error(error_msg)
     finally:
         # Remove instance container + image, close logger
-        cleanup_container(client, container, logger)
-        if rm_image:
-            remove_image(client, test_spec.instance_image_key, logger)
+        # cleanup_container(client, container, logger)
+        # if rm_image:
+        #     remove_image(client, test_spec.instance_image_key, logger)
         close_logger(logger)
     return
 
