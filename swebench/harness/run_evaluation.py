@@ -100,7 +100,7 @@ def get_modified_file(instance_id):
         modified_file = match.group(2).strip()
         modified_files.add(modified_file)
 
-    return modified_files
+    return modified_files, patch_text
 
 def run_instance(
     test_spec: TestSpec,
@@ -172,7 +172,8 @@ def run_instance(
     logger = setup_logger(instance_id, log_file)
 
     # get modified files of instance_id
-    modified_files = get_modified_file(instance_id)
+    modified_files, patch = get_modified_file(instance_id)
+
 
     # Run the instance
     container = None
@@ -294,28 +295,38 @@ def run_instance(
                     result_files.append(result_path)
                 f.write("end_time=$(date +%s)\n")
                 f.write("echo \"End time: $(date -d @$end_time)\"\n")
-                
+                f.write("chmod 777 /testbed/.coverage\n")
             else:
+                if "flask" in instance_id:
+                    f.write("python -m pip install werkzeug<3")
+                elif "matplotlib" in instance_id:
+                    f.write("python -m pip install numpy<2")
+                elif "pylint" in instance_id:
+                    f.write("python -m pip install --upgrade wrapt")
+                elif "xarray" in instance_id:
+                    f.write("python -m pip install numpy<2 pandas<2")
                 f.write("python -m pip install pytest pytest-cov coverage\n\n")
 
                 f.write("# Pre-collect all tests to speed up lookup\n")
                 # f.write("pytest --collect-only -q -p no:warnings > all_tests.txt\n\n")
                 f.write("# Run coverage for each test method\n")
                 f.write("# Configure .coveragerc for per-test dynamic context tracking\n")
-                # f.write("echo \"[run]\" > .coveragerc\n")
-                # f.write("echo \"dynamic_context = test_function\" >> .coveragerc\n")
-                # f.write("echo \"\" >> .coveragerc\n")
-                # f.write("echo \"[report]\" >> .coveragerc\n")
-                # f.write("echo \"show_missing = True\" >> .coveragerc\n\n")
-
                 f.write("echo \"[run]\" > .coveragerc\n")
                 f.write("echo \"dynamic_context = test_function\" >> .coveragerc\n")
                 f.write("echo \"\" >> .coveragerc\n")
                 f.write("echo \"[report]\" >> .coveragerc\n")
-                f.write("echo \"show_missing = True\" >> .coveragerc\n")
-                f.write("echo \"omit =\" >> .coveragerc\n")
-                f.write("echo \"    /testbed/generated/*\" >> .coveragerc\n")
+                f.write("echo \"show_missing = True\" >> .coveragerc\n\n")
                 f.write("echo \"ignore_errors = True\" >> .coveragerc\n")
+                f.write("echo \"include = *.py\" >> .coveragerc\n\n")
+
+                # f.write("echo \"[run]\" > .coveragerc\n")
+                # f.write("echo \"dynamic_context = test_function\" >> .coveragerc\n")
+                # f.write("echo \"\" >> .coveragerc\n")
+                # f.write("echo \"[report]\" >> .coveragerc\n")
+                # f.write("echo \"show_missing = True\" >> .coveragerc\n")
+                # f.write("echo \"omit =\" >> .coveragerc\n")
+                # f.write("echo \"    /testbed/generated/*\" >> .coveragerc\n")
+                # f.write("echo \"ignore_errors = True\" >> .coveragerc\n")
 
 
                 #echo -e "[run]\ndynamic_context = test_function\n\n[report]\nshow_missing = True\nomit =\n    /testbed/generated/*\nignore_errors = True" > .coveragerc
@@ -323,7 +334,7 @@ def run_instance(
                 f.write("# Run tests with coverage using dynamic contexts\n")
                 f.write("start_time=$(date +%s)\n")
                 f.write("echo \"Start time: $(date -d @$start_time)\"\n")
-                f.write("coverage run ./tests/runtests.py --verbosity 2 --settings=test_sqlite --parallel 1\n")
+                f.write("coverage run -m pytest\n")
                 f.write("end_time=$(date +%s)\n")
                 f.write("echo \"End time: $(date -d @$end_time)\"\n")
 
@@ -345,7 +356,9 @@ def run_instance(
                     result_files.append(result_path)
                 f.write("end_time=$(date +%s)\n")
                 f.write("echo \"End time: $(date -d @$end_time)\"\n")
-                f.write("chmod 777 /testbed\n")
+                f.write("chmod 777 /testbed/.coverage\n")
+                # f.write("chmod a+r /testbed\n")
+                # subprocess.run(["chmod", "a+r", coverage_file], check=True)
 
 
         logger.info(
@@ -401,13 +414,16 @@ def run_instance(
         """
         
         for rfile in result_files:
-            coverage_dir = "/testbed"
+            # if "django" in instance_id:
+            coverage_dir = "/testbed/"
+            # else:
+            #     coverage_dir = "/tmp/cov"
             coverage_file = os.path.join(coverage_dir, ".coverage")
             json_output_path = os.path.join(DOCKER_WORKDIR, rfile)
-            host_path = f"/data/workspace/yang/agent/new_covs_django/{instance_id}/"
+            host_path = f"/data/workspace/yang/agent/before_coverage/{instance_id}/"
             os.makedirs(host_path, exist_ok=True)
             host_json_path = os.path.join(host_path, f"{instance_id}_{rfile}")
-            host_coverge_path = os.path.join(host_path, coverage_file)
+            host_coverge_path = os.path.join(host_path, ".coverage")
 
             try:
                 copy_file_from_container(container, json_output_path, host_json_path)
@@ -439,9 +455,9 @@ def run_instance(
         logger.error(error_msg)
     finally:
         # Remove instance container + image, close logger
-        # cleanup_container(client, container, logger)
-        # if rm_image:
-        #     remove_image(client, test_spec.instance_image_key, logger)
+        cleanup_container(client, container, logger)
+        if rm_image:
+            remove_image(client, test_spec.instance_image_key, logger)
         close_logger(logger)
     return
 
