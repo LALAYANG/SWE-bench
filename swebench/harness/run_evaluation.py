@@ -238,6 +238,10 @@ def run_instance(
             f.write("echo 'Current Git Commit:'\n")
             f.write("git rev-parse HEAD\n\n")
 
+            f.write("git apply -v - <<'EOF_114329324912'\n")
+            f.write(f"{patch}\n")
+            f.write("EOF_114329324912\n")
+
             f.write("# Install required Python packages\n")
             if "astropy" in instance_id:
                 f.write("python -m pip install pytest pytest-cov coverage hypothesis pyerfa 'numpy<=1.23.2'\n\n")
@@ -257,6 +261,8 @@ def run_instance(
                 # f.write("echo \"\" >> .coveragerc\n")
                 # f.write("echo \"[report]\" >> .coveragerc\n")
                 # f.write("echo \"show_missing = True\" >> .coveragerc\n\n")
+
+                f.write("git diff\n")
 
                 f.write("echo \"[run]\" > .coveragerc\n")
                 f.write("echo \"dynamic_context = test_function\" >> .coveragerc\n")
@@ -283,16 +289,13 @@ def run_instance(
                 
                 f.write("coverage report -m\n\n")
 
-                # f.write("# List all available test contexts for per-test coverage\n")
-                # f.write("coverage context -l\n\n")
-
                 f.write("# Export coverage data as JSON for programmatic analysis\n")
                 # f.write("coverage json --show-contexts  -o coverage.json\n\n")
-                for file in modified_files:
-                    name = file.replace(".py", "").replace("/", "_")
-                    result_path = f"{name}_{instance_id}_coverage.json"
-                    f.write(f"coverage json --show-contexts --include {file} -o {result_path}\n\n")
-                    result_files.append(result_path)
+                # for file in modified_files:
+                #     name = file.replace(".py", "").replace("/", "_")
+                #     result_path = f"{name}_{instance_id}_coverage.json"
+                #     f.write(f"coverage json --show-contexts --include {file} -o {result_path}\n\n")
+                #     result_files.append(result_path)
                 f.write("end_time=$(date +%s)\n")
                 f.write("echo \"End time: $(date -d @$end_time)\"\n")
                 f.write("chmod 777 /testbed/.coverage\n")
@@ -305,7 +308,11 @@ def run_instance(
                     f.write("python -m pip install --upgrade wrapt")
                 elif "xarray" in instance_id:
                     f.write("python -m pip install numpy<2 pandas<2")
+                elif "pytest" in instance_id:
+                    f.write("python -m pip install hypothesis xmlschema\n")
                 f.write("python -m pip install pytest pytest-cov coverage\n\n")
+
+                f.write("git diff\n")
 
                 f.write("# Pre-collect all tests to speed up lookup\n")
                 # f.write("pytest --collect-only -q -p no:warnings > all_tests.txt\n\n")
@@ -334,7 +341,12 @@ def run_instance(
                 f.write("# Run tests with coverage using dynamic contexts\n")
                 f.write("start_time=$(date +%s)\n")
                 f.write("echo \"Start time: $(date -d @$start_time)\"\n")
+
+                # if "sympy" in instance_id:
+                #     f.write("PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' coverage run ./bin/test -C --verbose\n")
+                # else:
                 f.write("coverage run -m pytest\n")
+                
                 f.write("end_time=$(date +%s)\n")
                 f.write("echo \"End time: $(date -d @$end_time)\"\n")
 
@@ -344,16 +356,13 @@ def run_instance(
                 
                 f.write("coverage report -m\n\n")
 
-                # f.write("# List all available test contexts for per-test coverage\n")
-                # f.write("coverage context -l\n\n")
-
                 f.write("# Export coverage data as JSON for programmatic analysis\n")
                 # f.write("coverage json --show-contexts  -o coverage.json\n\n")
-                for file in modified_files:
-                    name = file.replace(".py", "").replace("/", "_")
-                    result_path = f"{name}_{instance_id}_coverage.json"
-                    f.write(f"coverage json --show-contexts --include {file} -o {result_path}\n\n")
-                    result_files.append(result_path)
+                # for file in modified_files:
+                #     name = file.replace(".py", "").replace("/", "_")
+                #     result_path = f"{name}_{instance_id}_coverage.json"
+                #     f.write(f"coverage json --show-contexts --include {file} -o {result_path}\n\n")
+                #     result_files.append(result_path)
                 f.write("end_time=$(date +%s)\n")
                 f.write("echo \"End time: $(date -d @$end_time)\"\n")
                 f.write("chmod 777 /testbed/.coverage\n")
@@ -420,7 +429,7 @@ def run_instance(
             #     coverage_dir = "/tmp/cov"
             coverage_file = os.path.join(coverage_dir, ".coverage")
             json_output_path = os.path.join(DOCKER_WORKDIR, rfile)
-            host_path = f"/data/workspace/yang/agent/before_coverage/{instance_id}/"
+            host_path = f"/data/workspace/yang/agent/after_coverage/{instance_id}/"
             os.makedirs(host_path, exist_ok=True)
             host_json_path = os.path.join(host_path, f"{instance_id}_{rfile}")
             host_coverge_path = os.path.join(host_path, ".coverage")
