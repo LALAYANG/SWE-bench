@@ -422,26 +422,24 @@ def run_instance(
         )
         """
         
-        for rfile in result_files:
+        # for rfile in result_files:
             # if "django" in instance_id:
-            coverage_dir = "/testbed/"
-            # else:
-            #     coverage_dir = "/tmp/cov"
-            coverage_file = os.path.join(coverage_dir, ".coverage")
-            json_output_path = os.path.join(DOCKER_WORKDIR, rfile)
-            host_path = f"/data/workspace/yang/agent/after_coverage/{instance_id}/"
-            os.makedirs(host_path, exist_ok=True)
-            host_json_path = os.path.join(host_path, f"{instance_id}_{rfile}")
-            host_coverge_path = os.path.join(host_path, ".coverage")
+        coverage_dir = "/testbed/"
+        coverage_file = os.path.join(coverage_dir, ".coverage")
+        # json_output_path = os.path.join(DOCKER_WORKDIR, rfile)
+        host_path = f"/data/workspace/yang/agent/after_coverage/{instance_id}/"
+        os.makedirs(host_path, exist_ok=True)
+        # host_json_path = os.path.join(host_path, f"{instance_id}_{rfile}")
+        host_coverge_path = os.path.join(host_path, ".coverage")
 
-            try:
-                copy_file_from_container(container, json_output_path, host_json_path)
-                copy_file_from_container(container, coverage_file, host_coverge_path)
-                # copy_file_from_container(container, coverage_dir, host
-                logger.info(f"Coverage for {rfile} copied to {host_json_path}")
-            except Exception as e:
-                logger.warning(f"Failed to copy coverage file: {e}")
-            break
+        try:
+            # copy_file_from_container(container, json_output_path, host_json_path)
+            copy_file_from_container(container, coverage_file, host_coverge_path)
+            # copy_file_from_container(container, coverage_dir, host
+            logger.info(f"Coverage for copied to {host_json_path}")
+        except Exception as e:
+            logger.warning(f"Failed to copy coverage file: {e}")
+            # break
         report = ""
         return instance_id, report
 
