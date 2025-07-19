@@ -99,8 +99,15 @@ def get_modified_file(instance_id):
     for match in pattern.finditer(patch_text):
         modified_file = match.group(2).strip()
         modified_files.add(modified_file)
+    
+    test_mods = []
+    for file in modified_files:
+        # get directory of the file
+        path = "/".join(file.split("/")[:-1])
+        if path not in test_mods:
+            test_mods.append(path)
 
-    return modified_files, patch_text
+    return modified_files, patch_text, test_mods
 
 def run_instance(
     test_spec: TestSpec,
@@ -172,7 +179,7 @@ def run_instance(
     logger = setup_logger(instance_id, log_file)
 
     # get modified files of instance_id
-    modified_files, patch = get_modified_file(instance_id)
+    modified_files, patch, modules = get_modified_file(instance_id)
 
 
     # Run the instance
@@ -297,20 +304,12 @@ def run_instance(
                 f.write("# Configure .coveragerc for per-test dynamic context tracking\n")
                 f.write("echo \"[run]\" > .coveragerc\n")
                 f.write("echo \"dynamic_context = test_function\" >> .coveragerc\n")
+                # f.write("echo \"source = sympy/matrices/common.py\" >> .coveragerc\n")  # <-- only track these
                 f.write("echo \"\" >> .coveragerc\n")
                 f.write("echo \"[report]\" >> .coveragerc\n")
                 f.write("echo \"show_missing = True\" >> .coveragerc\n\n")
                 f.write("echo \"ignore_errors = True\" >> .coveragerc\n")
-                f.write("echo \"include = *.py\" >> .coveragerc\n\n")
-
-                # f.write("echo \"[run]\" > .coveragerc\n")
-                # f.write("echo \"dynamic_context = test_function\" >> .coveragerc\n")
-                # f.write("echo \"\" >> .coveragerc\n")
-                # f.write("echo \"[report]\" >> .coveragerc\n")
-                # f.write("echo \"show_missing = True\" >> .coveragerc\n")
-                # f.write("echo \"omit =\" >> .coveragerc\n")
-                # f.write("echo \"    /testbed/generated/*\" >> .coveragerc\n")
-                # f.write("echo \"ignore_errors = True\" >> .coveragerc\n")
+                # f.write("echo \"include = *.py\" >> .coveragerc\n\n")
 
 
                 #echo -e "[run]\ndynamic_context = test_function\n\n[report]\nshow_missing = True\nomit =\n    /testbed/generated/*\nignore_errors = True" > .coveragerc
@@ -319,10 +318,15 @@ def run_instance(
                 f.write("start_time=$(date +%s)\n")
                 f.write("echo \"Start time: $(date -d @$start_time)\"\n")
 
-                # if "sympy" in instance_id:
-                #     f.write("PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' coverage run ./bin/test -C --verbose\n")
-                # else:
-                f.write("coverage run -m pytest\n")
+                if "sympy" in instance_id:
+                    # f.write("./setup.py test\n")
+                    # f.write("python -m pip install pytest-xdist\n")
+
+                    f.write(f"coverage run -m pytest {','.join(modules)}\n")
+                    # f.write("coverage combine")
+                    # f.write("PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' coverage run ./bin/test -C --verbose\n")
+                else:
+                    f.write("coverage run -m pytest\n")
                 
                 f.write("end_time=$(date +%s)\n")
                 f.write("echo \"End time: $(date -d @$end_time)\"\n")
