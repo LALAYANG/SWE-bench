@@ -186,47 +186,6 @@ def run_instance(
         logger.info(f"Container for {instance_id} started: {container.id}")
         
         #TODO: started
-        """
-        # Copy model prediction as patch file to container
-        patch_file = Path(log_dir / "patch.diff")
-        patch_file.write_text(pred[KEY_PREDICTION] or "")
-        logger.info(
-            f"Intermediate patch for {instance_id} written to {patch_file}, now applying to container..."
-        )
-        copy_to_container(container, patch_file, PurePosixPath(DOCKER_PATCH))
-
-        # Attempt to apply patch to container (TODO: FIX THIS)
-        applied_patch = False
-        for git_apply_cmd in GIT_APPLY_CMDS:
-            val = container.exec_run(
-                f"{git_apply_cmd} {DOCKER_PATCH}",
-                workdir=DOCKER_WORKDIR,
-                user=DOCKER_USER,
-            )
-            if val.exit_code == 0:
-                logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode(UTF8)}")
-                applied_patch = True
-                break
-            else:
-                logger.info(f"Failed to apply patch to container: {git_apply_cmd}")
-        if not applied_patch:
-            logger.info(f"{APPLY_PATCH_FAIL}:\n{val.output.decode(UTF8)}")
-            raise EvaluationError(
-                instance_id,
-                f"{APPLY_PATCH_FAIL}:\n{val.output.decode(UTF8)}",
-                logger,
-            )
-
-        # Get git diff before running eval script
-        git_diff_output_before = (
-            container.exec_run(
-                "git -c core.fileMode=false diff", workdir=DOCKER_WORKDIR
-            )
-            .output.decode(UTF8)
-            .strip()
-        )
-        logger.info(f"Git diff before:\n{git_diff_output_before}")
-        """
 
         eval_file = Path(log_dir / "eval.sh")
         eval_file.write_text(test_spec.eval_script)
@@ -238,29 +197,19 @@ def run_instance(
             f.write("echo 'Current Git Commit:'\n")
             f.write("git rev-parse HEAD\n\n")
 
-            f.write("git apply -v - <<'EOF_114329324912'\n")
-            f.write(f"{patch}\n")
-            f.write("EOF_114329324912\n")
+            # f.write("git apply -v - <<'EOF_114329324912'\n")
+            # f.write(f"{patch}\n")
+            # f.write("EOF_114329324912\n")
 
             f.write("# Install required Python packages\n")
-            if "astropy" in instance_id:
-                f.write("python -m pip install pytest pytest-cov coverage hypothesis pyerfa 'numpy<=1.23.2'\n\n")
-                f.write("python -m pip install -e .[test] coverage pytest\n")
-                if 'pytest' in instance_id:
-                    f.write("pip install --upgrade pytest-cov pytest-xdist\n")
-                    f.write("sed -i.bak '/^\s*rsyncdirs\s*=/ s/^/# /' tox.ini\n")
-            elif "django" in instance_id:
+
+            if "django" in instance_id:
                 f.write("python -m pip install pytest pytest-cov coverage\n\n")
 
                 f.write("# Pre-collect all tests to speed up lookup\n")
                 # f.write("pytest --collect-only -q -p no:warnings > all_tests.txt\n\n")
                 f.write("# Run coverage for each test method\n")
                 f.write("# Configure .coveragerc for per-test dynamic context tracking\n")
-                # f.write("echo \"[run]\" > .coveragerc\n")
-                # f.write("echo \"dynamic_context = test_function\" >> .coveragerc\n")
-                # f.write("echo \"\" >> .coveragerc\n")
-                # f.write("echo \"[report]\" >> .coveragerc\n")
-                # f.write("echo \"show_missing = True\" >> .coveragerc\n\n")
 
                 f.write("git diff\n")
 
@@ -272,9 +221,6 @@ def run_instance(
                 f.write("echo \"omit =\" >> .coveragerc\n")
                 f.write("echo \"    /testbed/generated/*\" >> .coveragerc\n")
                 f.write("echo \"ignore_errors = True\" >> .coveragerc\n")
-
-
-                #echo -e "[run]\ndynamic_context = test_function\n\n[report]\nshow_missing = True\nomit =\n    /testbed/generated/*\nignore_errors = True" > .coveragerc
 
                 f.write("# Run tests with coverage using dynamic contexts\n")
                 f.write("start_time=$(date +%s)\n")
@@ -310,6 +256,37 @@ def run_instance(
                     f.write("python -m pip install numpy<2 pandas<2")
                 elif "pytest" in instance_id:
                     f.write("python -m pip install hypothesis xmlschema\n")
+                elif "astropy__astropy-8707" in instance_id:
+                    f.write("python -m pip install pytest pytest-cov coverage hypothesis pyerfa\n\n")
+                    f.write("python -m pip install -e .[test] coverage pytest\n")
+
+                    f.write("set -e\n")
+                    f.write("echo 'Replacing deprecated NumPy aliases in all files...'\n\n")
+
+                    deprecated_aliases = {
+                        "int": "int",
+                        "float": "float",
+                        "bool": "bool",
+                        "object": "object",
+                        "str": "str",
+                        "long": "int",
+                        "unicode": "str",
+                    }
+
+                    for suffix, replacement in deprecated_aliases.items():
+                        for prefix in ["np", "numpy"]:
+                            sed_old = f"{prefix}\\.{suffix}"
+                            sed_cmd = f's/\\b{sed_old}\\b/{replacement}/g'
+                            f.write(f'find . -type f -exec sed -i -E "{sed_cmd}" {{}} +\n')
+                    f.write("\necho 'Done replacing deprecated NumPy types.'\n")
+                    f.write("\npython setup.py build_ext --inplace\n")
+
+
+                    # f.write("python -m pip install 'numpy<=1.24.4'\n")
+                elif "astropy" in instance_id:
+                    f.write("python -m pip install hypothesis pyerfa 'numpy<=1.23.2'\n\n")
+                    f.write("python -m pip install -e .[test] coverage pytest\n")
+                
                 f.write("python -m pip install pytest pytest-cov coverage\n\n")
 
                 f.write("git diff\n")
@@ -427,7 +404,7 @@ def run_instance(
         coverage_dir = "/testbed/"
         coverage_file = os.path.join(coverage_dir, ".coverage")
         # json_output_path = os.path.join(DOCKER_WORKDIR, rfile)
-        host_path = f"/data/workspace/yang/agent/after_coverage/{instance_id}/"
+        host_path = f"/data/workspace/yang/agent/before_coverage_add/{instance_id}/"
         os.makedirs(host_path, exist_ok=True)
         # host_json_path = os.path.join(host_path, f"{instance_id}_{rfile}")
         host_coverge_path = os.path.join(host_path, ".coverage")
@@ -436,7 +413,7 @@ def run_instance(
             # copy_file_from_container(container, json_output_path, host_json_path)
             copy_file_from_container(container, coverage_file, host_coverge_path)
             # copy_file_from_container(container, coverage_dir, host
-            logger.info(f"Coverage for copied to {host_json_path}")
+            logger.info(f"Coverage for copied to {host_coverge_path}")
         except Exception as e:
             logger.warning(f"Failed to copy coverage file: {e}")
             # break
@@ -779,7 +756,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--timeout",
         type=int,
-        default=7_200,  # 2 hours
+        default=172800,  # 2 hours
         help="Timeout (in seconds) for running tests for each instance",
     )
     parser.add_argument(
