@@ -307,6 +307,9 @@ def run_instance(
                 
                 f.write("python -m pip install pytest pytest-cov coverage\n\n")
 
+                if instance_id in ['astropy__astropy-13033','astropy__astropy-12907','astropy__astropy-13236','astropy__astropy-13398','astropy__astropy-13579']:
+                    f.write("python -m pip install pytest<8.0\n\n")
+
                 f.write("git diff\n")
 
                 f.write("# Pre-collect all tests to speed up lookup\n")
@@ -329,7 +332,6 @@ def run_instance(
                 f.write("start_time=$(date +%s)\n")
                 f.write("echo \"Start time: $(date -d @$start_time)\"\n")
                 f.write("pwd\n")
-                f.write("ls sklearn\n")
 
                 # if "sympy" in instance_id or "scikit-learn" in instance_id or "astropy" in instance_id or "matplotlib" in instance_id:
                 f.write(f"coverage run -m pytest {' '.join(modules)}\n")
