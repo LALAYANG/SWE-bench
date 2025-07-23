@@ -119,6 +119,7 @@ def run_instance(
     timeout: int | None = None,
     rewrite_reports: bool = False,
     test_methods: list = [],
+    cov_dir: str = "coverage_reports",
 ):
     """
     Run a single instance with the given prediction.
@@ -179,7 +180,11 @@ def run_instance(
     logger = setup_logger(instance_id, log_file)
 
     # get modified files of instance_id
-    modified_files, patch, modules = get_modified_file(instance_id)
+    if len(test_methods) == 0:
+        # golden
+        modified_files, patch, modules = get_modified_file(instance_id)
+    else:
+        modules = test_methods
 
 
     # Run the instance
@@ -232,7 +237,8 @@ def run_instance(
                 f.write("# Run tests with coverage using dynamic contexts\n")
                 f.write("start_time=$(date +%s)\n")
                 f.write("echo \"Start time: $(date -d @$start_time)\"\n")
-                f.write("coverage run ./tests/runtests.py --verbosity 2 --settings=test_sqlite --parallel 1\n")
+                # f.write(f"coverage run -m pytest {' '.join(modules)}\n")
+                f.write(f"coverage run ./tests/runtests.py {' '.join(modules)} --verbosity 2 --settings=test_sqlite --parallel 1\n")
                 f.write("end_time=$(date +%s)\n")
                 f.write("echo \"End time: $(date -d @$end_time)\"\n")
 
@@ -263,30 +269,31 @@ def run_instance(
                     f.write("python -m pip install numpy<2 pandas<2")
                 elif "pytest" in instance_id:
                     f.write("python -m pip install hypothesis xmlschema\n")
-                elif "astropy__astropy-8707" in instance_id:
-                    f.write("python -m pip install pytest pytest-cov coverage hypothesis pyerfa\n\n")
-                    f.write("python -m pip install -e .[test] coverage pytest\n")
 
-                    f.write("set -e\n")
-                    f.write("echo 'Replacing deprecated NumPy aliases in all files...'\n\n")
+                # elif "astropy__astropy-8707" in instance_id:
+                #     f.write("python -m pip install pytest pytest-cov coverage hypothesis pyerfa\n\n")
+                #     f.write("python -m pip install -e .[test] coverage pytest\n")
 
-                    deprecated_aliases = {
-                        "int": "int",
-                        "float": "float",
-                        "bool": "bool",
-                        "object": "object",
-                        "str": "str",
-                        "long": "int",
-                        "unicode": "str",
-                    }
+                #     f.write("set -e\n")
+                #     f.write("echo 'Replacing deprecated NumPy aliases in all files...'\n\n")
 
-                    for suffix, replacement in deprecated_aliases.items():
-                        for prefix in ["np", "numpy"]:
-                            sed_old = f"{prefix}\\.{suffix}"
-                            sed_cmd = f's/\\b{sed_old}\\b/{replacement}/g'
-                            f.write(f'find . -type f -exec sed -i -E "{sed_cmd}" {{}} +\n')
-                    f.write("\necho 'Done replacing deprecated NumPy types.'\n")
-                    f.write("\npython setup.py build_ext --inplace\n")
+                #     deprecated_aliases = {
+                #         "int": "int",
+                #         "float": "float",
+                #         "bool": "bool",
+                #         "object": "object",
+                #         "str": "str",
+                #         "long": "int",
+                #         "unicode": "str",
+                #     }
+
+                #     for suffix, replacement in deprecated_aliases.items():
+                #         for prefix in ["np", "numpy"]:
+                #             sed_old = f"{prefix}\\.{suffix}"
+                #             sed_cmd = f's/\\b{sed_old}\\b/{replacement}/g'
+                #             f.write(f'find . -type f -exec sed -i -E "{sed_cmd}" {{}} +\n')
+                #     f.write("\necho 'Done replacing deprecated NumPy types.'\n")
+                #     f.write("\npython setup.py build_ext --inplace\n")
 
 
                     # f.write("python -m pip install 'numpy<=1.24.4'\n")
@@ -317,16 +324,13 @@ def run_instance(
                 f.write("# Run tests with coverage using dynamic contexts\n")
                 f.write("start_time=$(date +%s)\n")
                 f.write("echo \"Start time: $(date -d @$start_time)\"\n")
+                f.write("pwd\n")
+                f.write("ls sklearn\n")
 
-                if "sympy" in instance_id:
-                    # f.write("./setup.py test\n")
-                    # f.write("python -m pip install pytest-xdist\n")
-
-                    f.write(f"coverage run -m pytest {','.join(modules)}\n")
-                    # f.write("coverage combine")
-                    # f.write("PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' coverage run ./bin/test -C --verbose\n")
-                else:
-                    f.write("coverage run -m pytest\n")
+                # if "sympy" in instance_id or "scikit-learn" in instance_id or "astropy" in instance_id or "matplotlib" in instance_id:
+                f.write(f"coverage run -m pytest {' '.join(modules)}\n")
+                # else:
+                    # f.write("coverage run -m pytest\n")
                 
                 f.write("end_time=$(date +%s)\n")
                 f.write("echo \"End time: $(date -d @$end_time)\"\n")
@@ -408,7 +412,7 @@ def run_instance(
         coverage_dir = "/testbed/"
         coverage_file = os.path.join(coverage_dir, ".coverage")
         # json_output_path = os.path.join(DOCKER_WORKDIR, rfile)
-        host_path = f"/data/workspace/yang/agent/before_coverage_add/{instance_id}/"
+        host_path = f"/data/workspace/yang/agent/{cov_dir}/{instance_id}/"
         os.makedirs(host_path, exist_ok=True)
         # host_json_path = os.path.join(host_path, f"{instance_id}_{rfile}")
         host_coverge_path = os.path.join(host_path, ".coverage")
@@ -463,6 +467,7 @@ def run_instances(
     instance_image_tag: str = "latest",
     rewrite_reports: bool = False,
     test_methods: list = [],
+    cov_dir: str = "coverage_reports",
 ):
     """
     Run all instances for the given predictions in parallel.
@@ -518,7 +523,8 @@ def run_instances(
                 run_id,
                 timeout,
                 rewrite_reports,
-                test_methods
+                test_methods,
+                cov_dir
             )
         )
 
@@ -643,6 +649,7 @@ def main(
     namespace: str | None,
     rewrite_reports: bool,
     test_methods: list[str],
+    cov_dir: str,
     modal: bool,
     instance_image_tag: str = "latest",
     report_dir: str = ".",
@@ -711,6 +718,7 @@ def main(
             instance_image_tag=instance_image_tag,
             rewrite_reports=rewrite_reports,
             test_methods=test_methods,
+            cov_dir=cov_dir,
         )
 
     # clean images + make final report
@@ -760,7 +768,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--timeout",
         type=int,
-        default=172800,  # 2 hours
+        default= 36000, #172800,  # 2 hours
         help="Timeout (in seconds) for running tests for each instance",
     )
     parser.add_argument(
@@ -809,6 +817,8 @@ if __name__ == "__main__":
 
     # Modal execution args
     parser.add_argument("--modal", type=str2bool, default=False, help="Run on Modal")
+
+    parser.add_argument( "--cov_dir", type=str, default="coverage_reports", help="Directory to save coverage reports to.")
 
     args = parser.parse_args()
     main(**vars(args))
