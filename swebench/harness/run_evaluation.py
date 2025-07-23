@@ -86,7 +86,9 @@ def copy_file_from_container(container, container_file_path, host_output_path):
 
 import re
 def path_to_module(paths):
-    return [path.replace('/', '.').removesuffix('.py') for path in paths]
+    return [path.replace('/', '.').removesuffix('.py').removeprefix('tests.')
+                for path in paths]
+
 def get_modified_file(instance_id):
     patch_text = ""
     from datasets import load_dataset
