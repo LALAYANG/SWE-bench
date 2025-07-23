@@ -84,12 +84,13 @@ def make_eval_script_list_common(
         # f"git status",
         # f"git show",
         # f"git -c core.fileMode=false diff {base_commit}",
-        reset_tests_command,
-        apply_test_patch_command,
-        *build_commands,
-        f": '{START_TEST_OUTPUT}'",
-        *test_commands,
-        f": '{END_TEST_OUTPUT}'",
-        reset_tests_command,
+
+        # reset_tests_command,
+        # apply_test_patch_command,
+        # *build_commands,
+        # f": '{START_TEST_OUTPUT}'",
+        # *test_commands,
+        # f": '{END_TEST_OUTPUT}'",
+        # reset_tests_command,
     ]
     return eval_commands

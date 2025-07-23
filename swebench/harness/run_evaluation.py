@@ -85,6 +85,8 @@ def copy_file_from_container(container, container_file_path, host_output_path):
                 break
 
 import re
+def path_to_module(paths):
+    return [path.replace('/', '.').removesuffix('.py') for path in paths]
 def get_modified_file(instance_id):
     patch_text = ""
     from datasets import load_dataset
@@ -238,7 +240,7 @@ def run_instance(
                 f.write("start_time=$(date +%s)\n")
                 f.write("echo \"Start time: $(date -d @$start_time)\"\n")
                 # f.write(f"coverage run -m pytest {' '.join(modules)}\n")
-                f.write(f"coverage run ./tests/runtests.py {' '.join(modules)} --verbosity 2 --settings=test_sqlite --parallel 1\n")
+                f.write(f"coverage run ./tests/runtests.py {' '.join(path_to_module(modules))} --verbosity 2 --settings=test_sqlite --parallel 1\n")
                 f.write("end_time=$(date +%s)\n")
                 f.write("echo \"End time: $(date -d @$end_time)\"\n")
 

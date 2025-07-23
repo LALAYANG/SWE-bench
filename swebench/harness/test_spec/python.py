@@ -413,11 +413,12 @@ def make_eval_script_list_py(
     if "install" in specs:
         eval_commands.append(specs["install"])
     eval_commands += [
-        reset_tests_command,
-        apply_test_patch_command,
-        f": '{START_TEST_OUTPUT}'",
-        test_command,
-        f": '{END_TEST_OUTPUT}'",
-        reset_tests_command,  # Revert tests after done, leave the repo in the same state as before
+        # reset_tests_command,
+        # apply_test_patch_command,
+        # f": '{START_TEST_OUTPUT}'",
+        # test_command,
+        # f": '{END_TEST_OUTPUT}'",
+        # reset_tests_command,  
+        # Revert tests after done, leave the repo in the same state as before
     ]
     return eval_commands
