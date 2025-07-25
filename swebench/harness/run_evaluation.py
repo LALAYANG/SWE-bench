@@ -242,6 +242,26 @@ def run_instance(
                 f.write("start_time=$(date +%s)\n")
                 f.write("echo \"Start time: $(date -d @$start_time)\"\n")
                 # f.write(f"coverage run -m pytest {' '.join(modules)}\n")
+
+                # test_files = modules
+                # f.write("test_files=(\n")
+                # for file in test_files:
+                #     f.write(f"  \"{file}\"\n")
+                # f.write(")\n\n")
+
+                # f.write("filtered_files=()\n")
+                # f.write("for file in \"${test_files[@]}\"; do\n")
+                # f.write("  if [ -f \"$file\" ]; then\n")
+                # f.write("    filtered_files+=(\"$file\")\n")
+                # f.write("  else\n")
+                # f.write("    echo \"Warning: $file not found, skipping.\"\n")
+                # f.write("  fi\n")
+                # f.write("done\n\n")
+
+                # f.write("echo \"Filtered test files:\"\n")
+                # f.write("printf '%s\\n' \"${filtered_files[@]}\"\n")
+                # f.write("coverage run -m pytest \"${filtered_files[@]}\"\n")
+
                 f.write(f"coverage run ./tests/runtests.py {' '.join(path_to_module(modules))} --verbosity 2 --settings=test_sqlite --parallel 1\n")
                 f.write("end_time=$(date +%s)\n")
                 f.write("echo \"End time: $(date -d @$end_time)\"\n")
@@ -308,7 +328,7 @@ def run_instance(
                 f.write("python -m pip install pytest pytest-cov coverage\n\n")
 
                 if instance_id in ['astropy__astropy-13033','astropy__astropy-12907','astropy__astropy-13236','astropy__astropy-13398','astropy__astropy-13579']:
-                    f.write("python -m pip install pytest<8.0\n\n")
+                    f.write("python -m pip install 'pytest<8.0'\n\n")
 
                 f.write("git diff\n")
 
@@ -334,7 +354,25 @@ def run_instance(
                 f.write("pwd\n")
 
                 # if "sympy" in instance_id or "scikit-learn" in instance_id or "astropy" in instance_id or "matplotlib" in instance_id:
-                f.write(f"coverage run -m pytest {' '.join(modules)}\n")
+                test_files = modules
+                f.write("test_files=(\n")
+                for file in test_files:
+                    f.write(f"  \"{file}\"\n")
+                f.write(")\n\n")
+
+                f.write("filtered_files=()\n")
+                f.write("for file in \"${test_files[@]}\"; do\n")
+                f.write("  if [ -f \"$file\" ]; then\n")
+                f.write("    filtered_files+=(\"$file\")\n")
+                f.write("  else\n")
+                f.write("    echo \"Warning: $file not found, skipping.\"\n")
+                f.write("  fi\n")
+                f.write("done\n\n")
+
+                f.write("echo \"Filtered test files:\"\n")
+                f.write("printf '%s\\n' \"${filtered_files[@]}\"\n")
+                f.write("coverage run -m pytest \"${filtered_files[@]}\"\n")
+
                 # else:
                     # f.write("coverage run -m pytest\n")
                 
