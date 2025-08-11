@@ -411,9 +411,9 @@ def run_instance(
         logger.error(error_msg)
     finally:
         # Remove instance container + image, close logger
-        # cleanup_container(client, container, logger)
-        # if rm_image:
-        #     remove_image(client, test_spec.instance_image_key, logger)
+        cleanup_container(client, container, logger)
+        if rm_image:
+            remove_image(client, test_spec.instance_image_key, logger)
         close_logger(logger)
     return
 
