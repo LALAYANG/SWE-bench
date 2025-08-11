@@ -200,6 +200,7 @@ def run_instance(
         )
         container.start()
         logger.info(f"Container for {instance_id} started: {container.id}")
+        print(f"Container for {instance_id} started: {container.id}")
         
         #TODO: started
 
@@ -207,22 +208,23 @@ def run_instance(
         eval_file.write_text(test_spec.eval_script)
         result_files = []
 
+        with eval_file.open("a") as f:
+            f.write("\n# === Appended Commands ===\n")
+            f.write("echo 'Current Git Commit:'\n")
+            f.write("git rev-parse HEAD\n\n")
+            f.write("python -m pip install pytest")
+
+        # """
         # Now append extra commands to the end of eval.sh
         with eval_file.open("a") as f:
             f.write("\n# === Appended Commands ===\n")
             f.write("echo 'Current Git Commit:'\n")
             f.write("git rev-parse HEAD\n\n")
 
-            # f.write("git apply -v - <<'EOF_114329324912'\n")
-            # f.write(f"{patch}\n")
-            # f.write("EOF_114329324912\n")
-
             f.write("# Install required Python packages\n")
 
             if "django" in instance_id:
                 f.write("python -m pip install pytest pytest-cov coverage\n\n")
-
-                f.write("# Pre-collect all tests to speed up lookup\n")
                 # f.write("pytest --collect-only -q -p no:warnings > all_tests.txt\n\n")
                 f.write("# Run coverage for each test method\n")
                 f.write("# Configure .coveragerc for per-test dynamic context tracking\n")
@@ -241,26 +243,6 @@ def run_instance(
                 f.write("# Run tests with coverage using dynamic contexts\n")
                 f.write("start_time=$(date +%s)\n")
                 f.write("echo \"Start time: $(date -d @$start_time)\"\n")
-                # f.write(f"coverage run -m pytest {' '.join(modules)}\n")
-
-                # test_files = modules
-                # f.write("test_files=(\n")
-                # for file in test_files:
-                #     f.write(f"  \"{file}\"\n")
-                # f.write(")\n\n")
-
-                # f.write("filtered_files=()\n")
-                # f.write("for file in \"${test_files[@]}\"; do\n")
-                # f.write("  if [ -f \"$file\" ]; then\n")
-                # f.write("    filtered_files+=(\"$file\")\n")
-                # f.write("  else\n")
-                # f.write("    echo \"Warning: $file not found, skipping.\"\n")
-                # f.write("  fi\n")
-                # f.write("done\n\n")
-
-                # f.write("echo \"Filtered test files:\"\n")
-                # f.write("printf '%s\\n' \"${filtered_files[@]}\"\n")
-                # f.write("coverage run -m pytest \"${filtered_files[@]}\"\n")
 
                 f.write(f"coverage run ./tests/runtests.py {' '.join(path_to_module(modules))} --verbosity 2 --settings=test_sqlite --parallel 1\n")
                 f.write("end_time=$(date +%s)\n")
@@ -273,12 +255,7 @@ def run_instance(
                 f.write("coverage report -m\n\n")
 
                 f.write("# Export coverage data as JSON for programmatic analysis\n")
-                # f.write("coverage json --show-contexts  -o coverage.json\n\n")
-                # for file in modified_files:
-                #     name = file.replace(".py", "").replace("/", "_")
-                #     result_path = f"{name}_{instance_id}_coverage.json"
-                #     f.write(f"coverage json --show-contexts --include {file} -o {result_path}\n\n")
-                #     result_files.append(result_path)
+
                 f.write("end_time=$(date +%s)\n")
                 f.write("echo \"End time: $(date -d @$end_time)\"\n")
                 f.write("chmod 777 /testbed/.coverage\n")
@@ -294,41 +271,14 @@ def run_instance(
                 elif "pytest" in instance_id:
                     f.write("python -m pip install hypothesis xmlschema\n")
 
-                # elif "astropy__astropy-8707" in instance_id:
-                #     f.write("python -m pip install pytest pytest-cov coverage hypothesis pyerfa\n\n")
-                #     f.write("python -m pip install -e .[test] coverage pytest\n")
-
-                #     f.write("set -e\n")
-                #     f.write("echo 'Replacing deprecated NumPy aliases in all files...'\n\n")
-
-                #     deprecated_aliases = {
-                #         "int": "int",
-                #         "float": "float",
-                #         "bool": "bool",
-                #         "object": "object",
-                #         "str": "str",
-                #         "long": "int",
-                #         "unicode": "str",
-                #     }
-
-                #     for suffix, replacement in deprecated_aliases.items():
-                #         for prefix in ["np", "numpy"]:
-                #             sed_old = f"{prefix}\\.{suffix}"
-                #             sed_cmd = f's/\\b{sed_old}\\b/{replacement}/g'
-                #             f.write(f'find . -type f -exec sed -i -E "{sed_cmd}" {{}} +\n')
-                #     f.write("\necho 'Done replacing deprecated NumPy types.'\n")
-                #     f.write("\npython setup.py build_ext --inplace\n")
-
-
-                    # f.write("python -m pip install 'numpy<=1.24.4'\n")
                 elif "astropy" in instance_id:
                     f.write("python -m pip install hypothesis pyerfa 'numpy<=1.23.2'\n\n")
                     f.write("python -m pip install -e .[test] coverage pytest\n")
                 
                 f.write("python -m pip install pytest pytest-cov coverage\n\n")
 
-                if instance_id in ['astropy__astropy-13033','astropy__astropy-12907','astropy__astropy-13236','astropy__astropy-13398','astropy__astropy-13579']:
-                    f.write("python -m pip install 'pytest<8.0'\n\n")
+                # if instance_id in ['astropy__astropy-13033','astropy__astropy-12907','astropy__astropy-13236','astropy__astropy-13398','astropy__astropy-13579']:
+                #     f.write("python -m pip install 'pytest<8.0'\n\n")
 
                 f.write("git diff\n")
 
@@ -371,33 +321,28 @@ def run_instance(
 
                 f.write("echo \"Filtered test files:\"\n")
                 f.write("printf '%s\\n' \"${filtered_files[@]}\"\n")
-                f.write("coverage run -m pytest \"${filtered_files[@]}\"\n")
 
-                # else:
-                    # f.write("coverage run -m pytest\n")
+                # f.write("pytest --verbosity=2 \"${filtered_files[@]}\"\n")
+                f.write("coverage run -m pytest -vv \"${filtered_files[@]}\"\n")
                 
                 f.write("end_time=$(date +%s)\n")
                 f.write("echo \"End time: $(date -d @$end_time)\"\n")
 
                 f.write("start_time=$(date +%s)\n")
                 f.write("echo \"Start time: $(date -d @$start_time)\"\n")
-                f.write("# Generate a human-readable coverage report\n")
+                # f.write("# Generate a human-readable coverage report\n")
                 
                 f.write("coverage report -m\n\n")
 
                 f.write("# Export coverage data as JSON for programmatic analysis\n")
-                # f.write("coverage json --show-contexts  -o coverage.json\n\n")
-                # for file in modified_files:
-                #     name = file.replace(".py", "").replace("/", "_")
-                #     result_path = f"{name}_{instance_id}_coverage.json"
-                #     f.write(f"coverage json --show-contexts --include {file} -o {result_path}\n\n")
-                #     result_files.append(result_path)
+
                 f.write("end_time=$(date +%s)\n")
                 f.write("echo \"End time: $(date -d @$end_time)\"\n")
                 f.write("chmod 777 /testbed/.coverage\n")
+                f.write("chmod 777 /testbed/.coveragerc\n")
                 # f.write("chmod a+r /testbed\n")
                 # subprocess.run(["chmod", "a+r", coverage_file], check=True)
-
+        # """
 
         logger.info(
             f"Eval script for {instance_id} written to {eval_file}; copying to container..."
@@ -429,46 +374,21 @@ def run_instance(
             .output.decode(UTF8)
             .strip()
         )
-        # exit(0)
-
-        # Check if git diff changed after running eval script
         logger.info(f"Git diff after:\n{git_diff_output_after}")
-        # if git_diff_output_after != git_diff_output_before:
-        #     logger.info("Git diff changed after running eval script")
 
-        # Get report from test output
-        """
-        logger.info(f"Grading answer for {instance_id}...")
-        report = get_eval_report(
-            test_spec=test_spec,
-            prediction=pred,
-            test_log_path=test_output_path,
-            include_tests_status=True,
-        )
-        logger.info(
-            f"report: {report}\n"
-            f"Result for {instance_id}: resolved: {report[instance_id]['resolved']}"
-        )
-        """
-        
-        # for rfile in result_files:
-            # if "django" in instance_id:
+        # """
         coverage_dir = "/testbed/"
         coverage_file = os.path.join(coverage_dir, ".coverage")
-        # json_output_path = os.path.join(DOCKER_WORKDIR, rfile)
-        host_path = f"/data/workspace/yang/agent/{cov_dir}/{instance_id}/"
+        host_path = f"{cov_dir}/{instance_id}/"
         os.makedirs(host_path, exist_ok=True)
-        # host_json_path = os.path.join(host_path, f"{instance_id}_{rfile}")
-        host_coverge_path = os.path.join(host_path, ".coverage")
+        host_coverge_path = os.path.join(host_path, f"{instance_id}_coverage")
 
         try:
-            # copy_file_from_container(container, json_output_path, host_json_path)
             copy_file_from_container(container, coverage_file, host_coverge_path)
-            # copy_file_from_container(container, coverage_dir, host
             logger.info(f"Coverage for copied to {host_coverge_path}")
         except Exception as e:
             logger.warning(f"Failed to copy coverage file: {e}")
-            # break
+        # """
         report = ""
         return instance_id, report
 
