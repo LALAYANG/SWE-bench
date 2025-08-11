@@ -214,7 +214,7 @@ def run_instance(
             f.write("git rev-parse HEAD\n\n")
             f.write("python -m pip install pytest")
 
-        """
+        # """
         # Now append extra commands to the end of eval.sh
         with eval_file.open("a") as f:
             f.write("\n# === Appended Commands ===\n")
@@ -225,8 +225,6 @@ def run_instance(
 
             if "django" in instance_id:
                 f.write("python -m pip install pytest pytest-cov coverage\n\n")
-
-                f.write("# Pre-collect all tests to speed up lookup\n")
                 # f.write("pytest --collect-only -q -p no:warnings > all_tests.txt\n\n")
                 f.write("# Run coverage for each test method\n")
                 f.write("# Configure .coveragerc for per-test dynamic context tracking\n")
@@ -324,17 +322,17 @@ def run_instance(
                 f.write("echo \"Filtered test files:\"\n")
                 f.write("printf '%s\\n' \"${filtered_files[@]}\"\n")
 
-                f.write("pytest --verbosity=2 \"${filtered_files[@]}\"\n")
-                # f.write("coverage run -m pytest \"${filtered_files[@]}\"\n")
+                # f.write("pytest --verbosity=2 \"${filtered_files[@]}\"\n")
+                f.write("coverage run -m pytest -vv \"${filtered_files[@]}\"\n")
                 
                 f.write("end_time=$(date +%s)\n")
                 f.write("echo \"End time: $(date -d @$end_time)\"\n")
 
                 f.write("start_time=$(date +%s)\n")
                 f.write("echo \"Start time: $(date -d @$start_time)\"\n")
-                f.write("# Generate a human-readable coverage report\n")
+                # f.write("# Generate a human-readable coverage report\n")
                 
-                # f.write("coverage report -m\n\n")
+                f.write("coverage report -m\n\n")
 
                 f.write("# Export coverage data as JSON for programmatic analysis\n")
 
@@ -344,7 +342,7 @@ def run_instance(
                 f.write("chmod 777 /testbed/.coveragerc\n")
                 # f.write("chmod a+r /testbed\n")
                 # subprocess.run(["chmod", "a+r", coverage_file], check=True)
-        """
+        # """
 
         logger.info(
             f"Eval script for {instance_id} written to {eval_file}; copying to container..."
@@ -378,19 +376,19 @@ def run_instance(
         )
         logger.info(f"Git diff after:\n{git_diff_output_after}")
 
-        """
+        # """
         coverage_dir = "/testbed/"
         coverage_file = os.path.join(coverage_dir, ".coverage")
-        host_path = f"/data/workspace/yang/agent/{cov_dir}/{instance_id}/"
+        host_path = f"{cov_dir}/{instance_id}/"
         os.makedirs(host_path, exist_ok=True)
-        host_coverge_path = os.path.join(host_path, ".coverage")
+        host_coverge_path = os.path.join(host_path, f"{instance_id}_coverage")
 
         try:
             copy_file_from_container(container, coverage_file, host_coverge_path)
             logger.info(f"Coverage for copied to {host_coverge_path}")
         except Exception as e:
             logger.warning(f"Failed to copy coverage file: {e}")
-        """
+        # """
         report = ""
         return instance_id, report
 
