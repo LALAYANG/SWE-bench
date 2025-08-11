@@ -32267,87 +32267,7 @@ Also reports on images and containers that may still running if client is provid
 <span class="normal">415</span>
 <span class="normal">416</span>
 <span class="normal">417</span>
-<span class="normal">418</span>
-<span class="normal">419</span>
-<span class="normal">420</span>
-<span class="normal">421</span>
-<span class="normal">422</span>
-<span class="normal">423</span>
-<span class="normal">424</span>
-<span class="normal">425</span>
-<span class="normal">426</span>
-<span class="normal">427</span>
-<span class="normal">428</span>
-<span class="normal">429</span>
-<span class="normal">430</span>
-<span class="normal">431</span>
-<span class="normal">432</span>
-<span class="normal">433</span>
-<span class="normal">434</span>
-<span class="normal">435</span>
-<span class="normal">436</span>
-<span class="normal">437</span>
-<span class="normal">438</span>
-<span class="normal">439</span>
-<span class="normal">440</span>
-<span class="normal">441</span>
-<span class="normal">442</span>
-<span class="normal">443</span>
-<span class="normal">444</span>
-<span class="normal">445</span>
-<span class="normal">446</span>
-<span class="normal">447</span>
-<span class="normal">448</span>
-<span class="normal">449</span>
-<span class="normal">450</span>
-<span class="normal">451</span>
-<span class="normal">452</span>
-<span class="normal">453</span>
-<span class="normal">454</span>
-<span class="normal">455</span>
-<span class="normal">456</span>
-<span class="normal">457</span>
-<span class="normal">458</span>
-<span class="normal">459</span>
-<span class="normal">460</span>
-<span class="normal">461</span>
-<span class="normal">462</span>
-<span class="normal">463</span>
-<span class="normal">464</span>
-<span class="normal">465</span>
-<span class="normal">466</span>
-<span class="normal">467</span>
-<span class="normal">468</span>
-<span class="normal">469</span>
-<span class="normal">470</span>
-<span class="normal">471</span>
-<span class="normal">472</span>
-<span class="normal">473</span>
-<span class="normal">474</span>
-<span class="normal">475</span>
-<span class="normal">476</span>
-<span class="normal">477</span>
-<span class="normal">478</span>
-<span class="normal">479</span>
-<span class="normal">480</span>
-<span class="normal">481</span>
-<span class="normal">482</span>
-<span class="normal">483</span>
-<span class="normal">484</span>
-<span class="normal">485</span>
-<span class="normal">486</span>
-<span class="normal">487</span>
-<span class="normal">488</span>
-<span class="normal">489</span>
-<span class="normal">490</span>
-<span class="normal">491</span>
-<span class="normal">492</span>
-<span class="normal">493</span>
-<span class="normal">494</span>
-<span class="normal">495</span>
-<span class="normal">496</span>
-<span class="normal">497</span>
-<span class="normal">498</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run_instance</span><span class="p">(</span>
+<span class="normal">418</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run_instance</span><span class="p">(</span>
     <span class="n">test_spec</span><span class="p">:</span> <span class="n">TestSpec</span><span class="p">,</span>
     <span class="n">pred</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
     <span class="n">rm_image</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
@@ -32434,6 +32354,7 @@ Also reports on images and containers that may still running if client is provid
         <span class="p">)</span>
         <span class="n">container</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Container for </span><span class="si">{</span><span class="n">instance_id</span><span class="si">}</span><span class="s2"> started: </span><span class="si">{</span><span class="n">container</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Container for </span><span class="si">{</span><span class="n">instance_id</span><span class="si">}</span><span class="s2"> started: </span><span class="si">{</span><span class="n">container</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="c1">#TODO: started</span>
 
@@ -32441,22 +32362,23 @@ Also reports on images and containers that may still running if client is provid
         <span class="n">eval_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">test_spec</span><span class="o">.</span><span class="n">eval_script</span><span class="p">)</span>
         <span class="n">result_files</span> <span class="o">=</span> <span class="p">[]</span>
 
+        <span class="k">with</span> <span class="n">eval_file</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"># === Appended Commands ===</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;echo &#39;Current Git Commit:&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;git rev-parse HEAD</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;python -m pip install pytest&quot;</span><span class="p">)</span>
+
+        <span class="c1"># &quot;&quot;&quot;</span>
         <span class="c1"># Now append extra commands to the end of eval.sh</span>
         <span class="k">with</span> <span class="n">eval_file</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"># === Appended Commands ===</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;echo &#39;Current Git Commit:&#39;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;git rev-parse HEAD</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
-            <span class="c1"># f.write(&quot;git apply -v - &lt;&lt;&#39;EOF_114329324912&#39;\n&quot;)</span>
-            <span class="c1"># f.write(f&quot;{patch}\n&quot;)</span>
-            <span class="c1"># f.write(&quot;EOF_114329324912\n&quot;)</span>
-
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;# Install required Python packages</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="s2">&quot;django&quot;</span> <span class="ow">in</span> <span class="n">instance_id</span><span class="p">:</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;python -m pip install pytest pytest-cov coverage</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
-
-                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;# Pre-collect all tests to speed up lookup</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="c1"># f.write(&quot;pytest --collect-only -q -p no:warnings &gt; all_tests.txt\n\n&quot;)</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;# Run coverage for each test method</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;# Configure .coveragerc for per-test dynamic context tracking</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -32475,26 +32397,6 @@ Also reports on images and containers that may still running if client is provid
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;# Run tests with coverage using dynamic contexts</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;start_time=$(date +</span><span class="si">%s</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;echo </span><span class="se">\&quot;</span><span class="s2">Start time: $(date -d @$start_time)</span><span class="se">\&quot;\n</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="c1"># f.write(f&quot;coverage run -m pytest {&#39; &#39;.join(modules)}\n&quot;)</span>
-
-                <span class="c1"># test_files = modules</span>
-                <span class="c1"># f.write(&quot;test_files=(\n&quot;)</span>
-                <span class="c1"># for file in test_files:</span>
-                <span class="c1">#     f.write(f&quot;  \&quot;{file}\&quot;\n&quot;)</span>
-                <span class="c1"># f.write(&quot;)\n\n&quot;)</span>
-
-                <span class="c1"># f.write(&quot;filtered_files=()\n&quot;)</span>
-                <span class="c1"># f.write(&quot;for file in \&quot;${test_files[@]}\&quot;; do\n&quot;)</span>
-                <span class="c1"># f.write(&quot;  if [ -f \&quot;$file\&quot; ]; then\n&quot;)</span>
-                <span class="c1"># f.write(&quot;    filtered_files+=(\&quot;$file\&quot;)\n&quot;)</span>
-                <span class="c1"># f.write(&quot;  else\n&quot;)</span>
-                <span class="c1"># f.write(&quot;    echo \&quot;Warning: $file not found, skipping.\&quot;\n&quot;)</span>
-                <span class="c1"># f.write(&quot;  fi\n&quot;)</span>
-                <span class="c1"># f.write(&quot;done\n\n&quot;)</span>
-
-                <span class="c1"># f.write(&quot;echo \&quot;Filtered test files:\&quot;\n&quot;)</span>
-                <span class="c1"># f.write(&quot;printf &#39;%s\\n&#39; \&quot;${filtered_files[@]}\&quot;\n&quot;)</span>
-                <span class="c1"># f.write(&quot;coverage run -m pytest \&quot;${filtered_files[@]}\&quot;\n&quot;)</span>
 
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;coverage run ./tests/runtests.py </span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_to_module</span><span class="p">(</span><span class="n">modules</span><span class="p">))</span><span class="si">}</span><span class="s2"> --verbosity 2 --settings=test_sqlite --parallel 1</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;end_time=$(date +</span><span class="si">%s</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -32507,12 +32409,7 @@ Also reports on images and containers that may still running if client is provid
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;coverage report -m</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;# Export coverage data as JSON for programmatic analysis</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="c1"># f.write(&quot;coverage json --show-contexts  -o coverage.json\n\n&quot;)</span>
-                <span class="c1"># for file in modified_files:</span>
-                <span class="c1">#     name = file.replace(&quot;.py&quot;, &quot;&quot;).replace(&quot;/&quot;, &quot;_&quot;)</span>
-                <span class="c1">#     result_path = f&quot;{name}_{instance_id}_coverage.json&quot;</span>
-                <span class="c1">#     f.write(f&quot;coverage json --show-contexts --include {file} -o {result_path}\n\n&quot;)</span>
-                <span class="c1">#     result_files.append(result_path)</span>
+
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;end_time=$(date +</span><span class="si">%s</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;echo </span><span class="se">\&quot;</span><span class="s2">End time: $(date -d @$end_time)</span><span class="se">\&quot;\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;chmod 777 /testbed/.coverage</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -32528,41 +32425,14 @@ Also reports on images and containers that may still running if client is provid
                 <span class="k">elif</span> <span class="s2">&quot;pytest&quot;</span> <span class="ow">in</span> <span class="n">instance_id</span><span class="p">:</span>
                     <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;python -m pip install hypothesis xmlschema</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
-                <span class="c1"># elif &quot;astropy__astropy-8707&quot; in instance_id:</span>
-                <span class="c1">#     f.write(&quot;python -m pip install pytest pytest-cov coverage hypothesis pyerfa\n\n&quot;)</span>
-                <span class="c1">#     f.write(&quot;python -m pip install -e .[test] coverage pytest\n&quot;)</span>
-
-                <span class="c1">#     f.write(&quot;set -e\n&quot;)</span>
-                <span class="c1">#     f.write(&quot;echo &#39;Replacing deprecated NumPy aliases in all files...&#39;\n\n&quot;)</span>
-
-                <span class="c1">#     deprecated_aliases = {</span>
-                <span class="c1">#         &quot;int&quot;: &quot;int&quot;,</span>
-                <span class="c1">#         &quot;float&quot;: &quot;float&quot;,</span>
-                <span class="c1">#         &quot;bool&quot;: &quot;bool&quot;,</span>
-                <span class="c1">#         &quot;object&quot;: &quot;object&quot;,</span>
-                <span class="c1">#         &quot;str&quot;: &quot;str&quot;,</span>
-                <span class="c1">#         &quot;long&quot;: &quot;int&quot;,</span>
-                <span class="c1">#         &quot;unicode&quot;: &quot;str&quot;,</span>
-                <span class="c1">#     }</span>
-
-                <span class="c1">#     for suffix, replacement in deprecated_aliases.items():</span>
-                <span class="c1">#         for prefix in [&quot;np&quot;, &quot;numpy&quot;]:</span>
-                <span class="c1">#             sed_old = f&quot;{prefix}\\.{suffix}&quot;</span>
-                <span class="c1">#             sed_cmd = f&#39;s/\\b{sed_old}\\b/{replacement}/g&#39;</span>
-                <span class="c1">#             f.write(f&#39;find . -type f -exec sed -i -E &quot;{sed_cmd}&quot; {{}} +\n&#39;)</span>
-                <span class="c1">#     f.write(&quot;\necho &#39;Done replacing deprecated NumPy types.&#39;\n&quot;)</span>
-                <span class="c1">#     f.write(&quot;\npython setup.py build_ext --inplace\n&quot;)</span>
-
-
-                    <span class="c1"># f.write(&quot;python -m pip install &#39;numpy&lt;=1.24.4&#39;\n&quot;)</span>
                 <span class="k">elif</span> <span class="s2">&quot;astropy&quot;</span> <span class="ow">in</span> <span class="n">instance_id</span><span class="p">:</span>
                     <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;python -m pip install hypothesis pyerfa &#39;numpy&lt;=1.23.2&#39;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
                     <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;python -m pip install -e .[test] coverage pytest</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;python -m pip install pytest pytest-cov coverage</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
-                <span class="k">if</span> <span class="n">instance_id</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;astropy__astropy-13033&#39;</span><span class="p">,</span><span class="s1">&#39;astropy__astropy-12907&#39;</span><span class="p">,</span><span class="s1">&#39;astropy__astropy-13236&#39;</span><span class="p">,</span><span class="s1">&#39;astropy__astropy-13398&#39;</span><span class="p">,</span><span class="s1">&#39;astropy__astropy-13579&#39;</span><span class="p">]:</span>
-                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;python -m pip install &#39;pytest&lt;8.0&#39;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="c1"># if instance_id in [&#39;astropy__astropy-13033&#39;,&#39;astropy__astropy-12907&#39;,&#39;astropy__astropy-13236&#39;,&#39;astropy__astropy-13398&#39;,&#39;astropy__astropy-13579&#39;]:</span>
+                <span class="c1">#     f.write(&quot;python -m pip install &#39;pytest&lt;8.0&#39;\n\n&quot;)</span>
 
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;git diff</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
@@ -32605,33 +32475,28 @@ Also reports on images and containers that may still running if client is provid
 
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;echo </span><span class="se">\&quot;</span><span class="s2">Filtered test files:</span><span class="se">\&quot;\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;printf &#39;</span><span class="si">%s</span><span class="se">\\</span><span class="s2">n&#39; </span><span class="se">\&quot;</span><span class="s2">$</span><span class="si">{filtered_files[@]}</span><span class="se">\&quot;\n</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;coverage run -m pytest </span><span class="se">\&quot;</span><span class="s2">$</span><span class="si">{filtered_files[@]}</span><span class="se">\&quot;\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
-                <span class="c1"># else:</span>
-                    <span class="c1"># f.write(&quot;coverage run -m pytest\n&quot;)</span>
+                <span class="c1"># f.write(&quot;pytest --verbosity=2 \&quot;${filtered_files[@]}\&quot;\n&quot;)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;coverage run -m pytest -vv </span><span class="se">\&quot;</span><span class="s2">$</span><span class="si">{filtered_files[@]}</span><span class="se">\&quot;\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;end_time=$(date +</span><span class="si">%s</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;echo </span><span class="se">\&quot;</span><span class="s2">End time: $(date -d @$end_time)</span><span class="se">\&quot;\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;start_time=$(date +</span><span class="si">%s</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;echo </span><span class="se">\&quot;</span><span class="s2">Start time: $(date -d @$start_time)</span><span class="se">\&quot;\n</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;# Generate a human-readable coverage report</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="c1"># f.write(&quot;# Generate a human-readable coverage report\n&quot;)</span>
 
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;coverage report -m</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;# Export coverage data as JSON for programmatic analysis</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="c1"># f.write(&quot;coverage json --show-contexts  -o coverage.json\n\n&quot;)</span>
-                <span class="c1"># for file in modified_files:</span>
-                <span class="c1">#     name = file.replace(&quot;.py&quot;, &quot;&quot;).replace(&quot;/&quot;, &quot;_&quot;)</span>
-                <span class="c1">#     result_path = f&quot;{name}_{instance_id}_coverage.json&quot;</span>
-                <span class="c1">#     f.write(f&quot;coverage json --show-contexts --include {file} -o {result_path}\n\n&quot;)</span>
-                <span class="c1">#     result_files.append(result_path)</span>
+
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;end_time=$(date +</span><span class="si">%s</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;echo </span><span class="se">\&quot;</span><span class="s2">End time: $(date -d @$end_time)</span><span class="se">\&quot;\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;chmod 777 /testbed/.coverage</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;chmod 777 /testbed/.coveragerc</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="c1"># f.write(&quot;chmod a+r /testbed\n&quot;)</span>
                 <span class="c1"># subprocess.run([&quot;chmod&quot;, &quot;a+r&quot;, coverage_file], check=True)</span>
-
+        <span class="c1"># &quot;&quot;&quot;</span>
 
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Eval script for </span><span class="si">{</span><span class="n">instance_id</span><span class="si">}</span><span class="s2"> written to </span><span class="si">{</span><span class="n">eval_file</span><span class="si">}</span><span class="s2">; copying to container...&quot;</span>
@@ -32663,46 +32528,21 @@ Also reports on images and containers that may still running if client is provid
             <span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">UTF8</span><span class="p">)</span>
             <span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="p">)</span>
-        <span class="c1"># exit(0)</span>
-
-        <span class="c1"># Check if git diff changed after running eval script</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Git diff after:</span><span class="se">\n</span><span class="si">{</span><span class="n">git_diff_output_after</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="c1"># if git_diff_output_after != git_diff_output_before:</span>
-        <span class="c1">#     logger.info(&quot;Git diff changed after running eval script&quot;)</span>
 
-        <span class="c1"># Get report from test output</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        logger.info(f&quot;Grading answer for {instance_id}...&quot;)</span>
-<span class="sd">        report = get_eval_report(</span>
-<span class="sd">            test_spec=test_spec,</span>
-<span class="sd">            prediction=pred,</span>
-<span class="sd">            test_log_path=test_output_path,</span>
-<span class="sd">            include_tests_status=True,</span>
-<span class="sd">        )</span>
-<span class="sd">        logger.info(</span>
-<span class="sd">            f&quot;report: {report}\n&quot;</span>
-<span class="sd">            f&quot;Result for {instance_id}: resolved: {report[instance_id][&#39;resolved&#39;]}&quot;</span>
-<span class="sd">        )</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="c1"># for rfile in result_files:</span>
-            <span class="c1"># if &quot;django&quot; in instance_id:</span>
+        <span class="c1"># &quot;&quot;&quot;</span>
         <span class="n">coverage_dir</span> <span class="o">=</span> <span class="s2">&quot;/testbed/&quot;</span>
         <span class="n">coverage_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">coverage_dir</span><span class="p">,</span> <span class="s2">&quot;.coverage&quot;</span><span class="p">)</span>
-        <span class="c1"># json_output_path = os.path.join(DOCKER_WORKDIR, rfile)</span>
-        <span class="n">host_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/data/workspace/yang/agent/</span><span class="si">{</span><span class="n">cov_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">instance_id</span><span class="si">}</span><span class="s2">/&quot;</span>
+        <span class="n">host_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cov_dir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">instance_id</span><span class="si">}</span><span class="s2">/&quot;</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">host_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="c1"># host_json_path = os.path.join(host_path, f&quot;{instance_id}_{rfile}&quot;)</span>
-        <span class="n">host_coverge_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">host_path</span><span class="p">,</span> <span class="s2">&quot;.coverage&quot;</span><span class="p">)</span>
+        <span class="n">host_coverge_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">host_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance_id</span><span class="si">}</span><span class="s2">_coverage&quot;</span><span class="p">)</span>
 
         <span class="k">try</span><span class="p">:</span>
-            <span class="c1"># copy_file_from_container(container, json_output_path, host_json_path)</span>
             <span class="n">copy_file_from_container</span><span class="p">(</span><span class="n">container</span><span class="p">,</span> <span class="n">coverage_file</span><span class="p">,</span> <span class="n">host_coverge_path</span><span class="p">)</span>
-            <span class="c1"># copy_file_from_container(container, coverage_dir, host</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Coverage for copied to </span><span class="si">{</span><span class="n">host_coverge_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to copy coverage file: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="c1"># break</span>
+        <span class="c1"># &quot;&quot;&quot;</span>
         <span class="n">report</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
         <span class="k">return</span> <span class="n">instance_id</span><span class="p">,</span> <span class="n">report</span>
 
@@ -32897,84 +32737,84 @@ Also reports on images and containers that may still running if client is provid
 
             <details class="quote">
               <summary>Source code in <code>swebench/harness/run_evaluation.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">501</span>
-<span class="normal">502</span>
-<span class="normal">503</span>
-<span class="normal">504</span>
-<span class="normal">505</span>
-<span class="normal">506</span>
-<span class="normal">507</span>
-<span class="normal">508</span>
-<span class="normal">509</span>
-<span class="normal">510</span>
-<span class="normal">511</span>
-<span class="normal">512</span>
-<span class="normal">513</span>
-<span class="normal">514</span>
-<span class="normal">515</span>
-<span class="normal">516</span>
-<span class="normal">517</span>
-<span class="normal">518</span>
-<span class="normal">519</span>
-<span class="normal">520</span>
-<span class="normal">521</span>
-<span class="normal">522</span>
-<span class="normal">523</span>
-<span class="normal">524</span>
-<span class="normal">525</span>
-<span class="normal">526</span>
-<span class="normal">527</span>
-<span class="normal">528</span>
-<span class="normal">529</span>
-<span class="normal">530</span>
-<span class="normal">531</span>
-<span class="normal">532</span>
-<span class="normal">533</span>
-<span class="normal">534</span>
-<span class="normal">535</span>
-<span class="normal">536</span>
-<span class="normal">537</span>
-<span class="normal">538</span>
-<span class="normal">539</span>
-<span class="normal">540</span>
-<span class="normal">541</span>
-<span class="normal">542</span>
-<span class="normal">543</span>
-<span class="normal">544</span>
-<span class="normal">545</span>
-<span class="normal">546</span>
-<span class="normal">547</span>
-<span class="normal">548</span>
-<span class="normal">549</span>
-<span class="normal">550</span>
-<span class="normal">551</span>
-<span class="normal">552</span>
-<span class="normal">553</span>
-<span class="normal">554</span>
-<span class="normal">555</span>
-<span class="normal">556</span>
-<span class="normal">557</span>
-<span class="normal">558</span>
-<span class="normal">559</span>
-<span class="normal">560</span>
-<span class="normal">561</span>
-<span class="normal">562</span>
-<span class="normal">563</span>
-<span class="normal">564</span>
-<span class="normal">565</span>
-<span class="normal">566</span>
-<span class="normal">567</span>
-<span class="normal">568</span>
-<span class="normal">569</span>
-<span class="normal">570</span>
-<span class="normal">571</span>
-<span class="normal">572</span>
-<span class="normal">573</span>
-<span class="normal">574</span>
-<span class="normal">575</span>
-<span class="normal">576</span>
-<span class="normal">577</span>
-<span class="normal">578</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run_instances</span><span class="p">(</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">421</span>
+<span class="normal">422</span>
+<span class="normal">423</span>
+<span class="normal">424</span>
+<span class="normal">425</span>
+<span class="normal">426</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span>
+<span class="normal">479</span>
+<span class="normal">480</span>
+<span class="normal">481</span>
+<span class="normal">482</span>
+<span class="normal">483</span>
+<span class="normal">484</span>
+<span class="normal">485</span>
+<span class="normal">486</span>
+<span class="normal">487</span>
+<span class="normal">488</span>
+<span class="normal">489</span>
+<span class="normal">490</span>
+<span class="normal">491</span>
+<span class="normal">492</span>
+<span class="normal">493</span>
+<span class="normal">494</span>
+<span class="normal">495</span>
+<span class="normal">496</span>
+<span class="normal">497</span>
+<span class="normal">498</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run_instances</span><span class="p">(</span>
     <span class="n">predictions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
     <span class="n">instances</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
     <span class="n">cache_level</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -33078,7 +32918,87 @@ If exclude_completed is True, only return instances that have not been run yet.<
 
             <details class="quote">
               <summary>Source code in <code>swebench/harness/run_evaluation.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">581</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">501</span>
+<span class="normal">502</span>
+<span class="normal">503</span>
+<span class="normal">504</span>
+<span class="normal">505</span>
+<span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span>
+<span class="normal">509</span>
+<span class="normal">510</span>
+<span class="normal">511</span>
+<span class="normal">512</span>
+<span class="normal">513</span>
+<span class="normal">514</span>
+<span class="normal">515</span>
+<span class="normal">516</span>
+<span class="normal">517</span>
+<span class="normal">518</span>
+<span class="normal">519</span>
+<span class="normal">520</span>
+<span class="normal">521</span>
+<span class="normal">522</span>
+<span class="normal">523</span>
+<span class="normal">524</span>
+<span class="normal">525</span>
+<span class="normal">526</span>
+<span class="normal">527</span>
+<span class="normal">528</span>
+<span class="normal">529</span>
+<span class="normal">530</span>
+<span class="normal">531</span>
+<span class="normal">532</span>
+<span class="normal">533</span>
+<span class="normal">534</span>
+<span class="normal">535</span>
+<span class="normal">536</span>
+<span class="normal">537</span>
+<span class="normal">538</span>
+<span class="normal">539</span>
+<span class="normal">540</span>
+<span class="normal">541</span>
+<span class="normal">542</span>
+<span class="normal">543</span>
+<span class="normal">544</span>
+<span class="normal">545</span>
+<span class="normal">546</span>
+<span class="normal">547</span>
+<span class="normal">548</span>
+<span class="normal">549</span>
+<span class="normal">550</span>
+<span class="normal">551</span>
+<span class="normal">552</span>
+<span class="normal">553</span>
+<span class="normal">554</span>
+<span class="normal">555</span>
+<span class="normal">556</span>
+<span class="normal">557</span>
+<span class="normal">558</span>
+<span class="normal">559</span>
+<span class="normal">560</span>
+<span class="normal">561</span>
+<span class="normal">562</span>
+<span class="normal">563</span>
+<span class="normal">564</span>
+<span class="normal">565</span>
+<span class="normal">566</span>
+<span class="normal">567</span>
+<span class="normal">568</span>
+<span class="normal">569</span>
+<span class="normal">570</span>
+<span class="normal">571</span>
+<span class="normal">572</span>
+<span class="normal">573</span>
+<span class="normal">574</span>
+<span class="normal">575</span>
+<span class="normal">576</span>
+<span class="normal">577</span>
+<span class="normal">578</span>
+<span class="normal">579</span>
+<span class="normal">580</span>
+<span class="normal">581</span>
 <span class="normal">582</span>
 <span class="normal">583</span>
 <span class="normal">584</span>
@@ -33095,87 +33015,7 @@ If exclude_completed is True, only return instances that have not been run yet.<
 <span class="normal">595</span>
 <span class="normal">596</span>
 <span class="normal">597</span>
-<span class="normal">598</span>
-<span class="normal">599</span>
-<span class="normal">600</span>
-<span class="normal">601</span>
-<span class="normal">602</span>
-<span class="normal">603</span>
-<span class="normal">604</span>
-<span class="normal">605</span>
-<span class="normal">606</span>
-<span class="normal">607</span>
-<span class="normal">608</span>
-<span class="normal">609</span>
-<span class="normal">610</span>
-<span class="normal">611</span>
-<span class="normal">612</span>
-<span class="normal">613</span>
-<span class="normal">614</span>
-<span class="normal">615</span>
-<span class="normal">616</span>
-<span class="normal">617</span>
-<span class="normal">618</span>
-<span class="normal">619</span>
-<span class="normal">620</span>
-<span class="normal">621</span>
-<span class="normal">622</span>
-<span class="normal">623</span>
-<span class="normal">624</span>
-<span class="normal">625</span>
-<span class="normal">626</span>
-<span class="normal">627</span>
-<span class="normal">628</span>
-<span class="normal">629</span>
-<span class="normal">630</span>
-<span class="normal">631</span>
-<span class="normal">632</span>
-<span class="normal">633</span>
-<span class="normal">634</span>
-<span class="normal">635</span>
-<span class="normal">636</span>
-<span class="normal">637</span>
-<span class="normal">638</span>
-<span class="normal">639</span>
-<span class="normal">640</span>
-<span class="normal">641</span>
-<span class="normal">642</span>
-<span class="normal">643</span>
-<span class="normal">644</span>
-<span class="normal">645</span>
-<span class="normal">646</span>
-<span class="normal">647</span>
-<span class="normal">648</span>
-<span class="normal">649</span>
-<span class="normal">650</span>
-<span class="normal">651</span>
-<span class="normal">652</span>
-<span class="normal">653</span>
-<span class="normal">654</span>
-<span class="normal">655</span>
-<span class="normal">656</span>
-<span class="normal">657</span>
-<span class="normal">658</span>
-<span class="normal">659</span>
-<span class="normal">660</span>
-<span class="normal">661</span>
-<span class="normal">662</span>
-<span class="normal">663</span>
-<span class="normal">664</span>
-<span class="normal">665</span>
-<span class="normal">666</span>
-<span class="normal">667</span>
-<span class="normal">668</span>
-<span class="normal">669</span>
-<span class="normal">670</span>
-<span class="normal">671</span>
-<span class="normal">672</span>
-<span class="normal">673</span>
-<span class="normal">674</span>
-<span class="normal">675</span>
-<span class="normal">676</span>
-<span class="normal">677</span>
-<span class="normal">678</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_dataset_from_preds</span><span class="p">(</span>
+<span class="normal">598</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_dataset_from_preds</span><span class="p">(</span>
     <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">split</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">instance_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
@@ -33297,7 +33137,87 @@ If exclude_completed is True, only return instances that have not been run yet.<
 
             <details class="quote">
               <summary>Source code in <code>swebench/harness/run_evaluation.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">681</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">601</span>
+<span class="normal">602</span>
+<span class="normal">603</span>
+<span class="normal">604</span>
+<span class="normal">605</span>
+<span class="normal">606</span>
+<span class="normal">607</span>
+<span class="normal">608</span>
+<span class="normal">609</span>
+<span class="normal">610</span>
+<span class="normal">611</span>
+<span class="normal">612</span>
+<span class="normal">613</span>
+<span class="normal">614</span>
+<span class="normal">615</span>
+<span class="normal">616</span>
+<span class="normal">617</span>
+<span class="normal">618</span>
+<span class="normal">619</span>
+<span class="normal">620</span>
+<span class="normal">621</span>
+<span class="normal">622</span>
+<span class="normal">623</span>
+<span class="normal">624</span>
+<span class="normal">625</span>
+<span class="normal">626</span>
+<span class="normal">627</span>
+<span class="normal">628</span>
+<span class="normal">629</span>
+<span class="normal">630</span>
+<span class="normal">631</span>
+<span class="normal">632</span>
+<span class="normal">633</span>
+<span class="normal">634</span>
+<span class="normal">635</span>
+<span class="normal">636</span>
+<span class="normal">637</span>
+<span class="normal">638</span>
+<span class="normal">639</span>
+<span class="normal">640</span>
+<span class="normal">641</span>
+<span class="normal">642</span>
+<span class="normal">643</span>
+<span class="normal">644</span>
+<span class="normal">645</span>
+<span class="normal">646</span>
+<span class="normal">647</span>
+<span class="normal">648</span>
+<span class="normal">649</span>
+<span class="normal">650</span>
+<span class="normal">651</span>
+<span class="normal">652</span>
+<span class="normal">653</span>
+<span class="normal">654</span>
+<span class="normal">655</span>
+<span class="normal">656</span>
+<span class="normal">657</span>
+<span class="normal">658</span>
+<span class="normal">659</span>
+<span class="normal">660</span>
+<span class="normal">661</span>
+<span class="normal">662</span>
+<span class="normal">663</span>
+<span class="normal">664</span>
+<span class="normal">665</span>
+<span class="normal">666</span>
+<span class="normal">667</span>
+<span class="normal">668</span>
+<span class="normal">669</span>
+<span class="normal">670</span>
+<span class="normal">671</span>
+<span class="normal">672</span>
+<span class="normal">673</span>
+<span class="normal">674</span>
+<span class="normal">675</span>
+<span class="normal">676</span>
+<span class="normal">677</span>
+<span class="normal">678</span>
+<span class="normal">679</span>
+<span class="normal">680</span>
+<span class="normal">681</span>
 <span class="normal">682</span>
 <span class="normal">683</span>
 <span class="normal">684</span>
@@ -33306,87 +33226,7 @@ If exclude_completed is True, only return instances that have not been run yet.<
 <span class="normal">687</span>
 <span class="normal">688</span>
 <span class="normal">689</span>
-<span class="normal">690</span>
-<span class="normal">691</span>
-<span class="normal">692</span>
-<span class="normal">693</span>
-<span class="normal">694</span>
-<span class="normal">695</span>
-<span class="normal">696</span>
-<span class="normal">697</span>
-<span class="normal">698</span>
-<span class="normal">699</span>
-<span class="normal">700</span>
-<span class="normal">701</span>
-<span class="normal">702</span>
-<span class="normal">703</span>
-<span class="normal">704</span>
-<span class="normal">705</span>
-<span class="normal">706</span>
-<span class="normal">707</span>
-<span class="normal">708</span>
-<span class="normal">709</span>
-<span class="normal">710</span>
-<span class="normal">711</span>
-<span class="normal">712</span>
-<span class="normal">713</span>
-<span class="normal">714</span>
-<span class="normal">715</span>
-<span class="normal">716</span>
-<span class="normal">717</span>
-<span class="normal">718</span>
-<span class="normal">719</span>
-<span class="normal">720</span>
-<span class="normal">721</span>
-<span class="normal">722</span>
-<span class="normal">723</span>
-<span class="normal">724</span>
-<span class="normal">725</span>
-<span class="normal">726</span>
-<span class="normal">727</span>
-<span class="normal">728</span>
-<span class="normal">729</span>
-<span class="normal">730</span>
-<span class="normal">731</span>
-<span class="normal">732</span>
-<span class="normal">733</span>
-<span class="normal">734</span>
-<span class="normal">735</span>
-<span class="normal">736</span>
-<span class="normal">737</span>
-<span class="normal">738</span>
-<span class="normal">739</span>
-<span class="normal">740</span>
-<span class="normal">741</span>
-<span class="normal">742</span>
-<span class="normal">743</span>
-<span class="normal">744</span>
-<span class="normal">745</span>
-<span class="normal">746</span>
-<span class="normal">747</span>
-<span class="normal">748</span>
-<span class="normal">749</span>
-<span class="normal">750</span>
-<span class="normal">751</span>
-<span class="normal">752</span>
-<span class="normal">753</span>
-<span class="normal">754</span>
-<span class="normal">755</span>
-<span class="normal">756</span>
-<span class="normal">757</span>
-<span class="normal">758</span>
-<span class="normal">759</span>
-<span class="normal">760</span>
-<span class="normal">761</span>
-<span class="normal">762</span>
-<span class="normal">763</span>
-<span class="normal">764</span>
-<span class="normal">765</span>
-<span class="normal">766</span>
-<span class="normal">767</span>
-<span class="normal">768</span>
-<span class="normal">769</span>
-<span class="normal">770</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span>
+<span class="normal">690</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span>
     <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">split</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">instance_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
