@@ -326,7 +326,7 @@ def run_instance(
                 if "pytest" not in instance_id:
                     f.write("coverage run -m pytest -vv \"${filtered_files[@]}\"\n")
                 else:
-                    f.write("PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 coverage run -m pytest -vv -rA --tb=no -p no:cacheprovider -p no:warnings \"${filtered_files[@]}\"\n")
+                    f.write("PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 coverage run -m pytest --continue-on-collection-errors -vv -rA --tb=no -p no:cacheprovider -p no:warnings \"${filtered_files[@]}\"\n")
 
                 f.write("end_time=$(date +%s)\n")
                 f.write("echo \"End time: $(date -d @$end_time)\"\n")
