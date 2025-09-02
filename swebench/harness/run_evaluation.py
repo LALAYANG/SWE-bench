@@ -304,6 +304,7 @@ def run_instance(
                 f.write("pwd\n")
 
                 # if "sympy" in instance_id or "scikit-learn" in instance_id or "astropy" in instance_id or "matplotlib" in instance_id:
+                """
                 test_files = modules
                 f.write("test_files=(\n")
                 for file in test_files:
@@ -321,10 +322,11 @@ def run_instance(
 
                 f.write("echo \"Filtered test files:\"\n")
                 f.write("printf '%s\\n' \"${filtered_files[@]}\"\n")
-
+                """
                 # f.write("pytest --verbosity=2 \"${filtered_files[@]}\"\n")
-                f.write("coverage run -m pytest -vv \"${filtered_files[@]}\"\n")
-                
+                # f.write("coverage run -m pytest -vv \"${filtered_files[@]}\"\n")
+                f.write("coverage run -m pytest -vv \n")
+
                 f.write("end_time=$(date +%s)\n")
                 f.write("echo \"End time: $(date -d @$end_time)\"\n")
 
